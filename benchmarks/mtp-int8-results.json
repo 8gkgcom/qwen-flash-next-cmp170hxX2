@@ -1,0 +1,201 @@
+{
+  "date": "2026-10-01",
+  "model": "dealignai/Qwen3.8-Flash-Next-ABLITERATED-NVFP4",
+  "upstream": "https://github.com/nguyenthimy2022kg-alt/Qwen-Flash-SM80-170HX",
+  "pinned_tag": "v0.1.7",
+  "method": {
+    "prompt_and_output_length_controlled": true,
+    "seed": 0,
+    "single_output_tokens": 2048,
+    "pair_output_tokens_each": 1024,
+    "code_thinking": false,
+    "agent_and_pair_thinking": "xhigh",
+    "tps_definition": "completion tokens divided by last minus first nonempty SSE event, reasoning included",
+    "default_temperature_unchanged": 1.0,
+    "limitations": [
+      "Two samples per single-request scenario, output content can vary even with temperature zero.",
+      "Temperature-zero and temperature-one tests are reported separately.",
+      "The MTP6 INT8 end-to-end screen used the initial single-row-only adapter; the expanded batch adapter was fully validated with MTP4.",
+      "No claim of strict draft argmax equivalence for every possible hidden state; target weights/logits and rejection verification are unchanged."
+    ]
+  },
+  "temperature_zero": {
+    "before_bf16_mtp6": {
+      "code": {
+        "runs": 2,
+        "mean_tps": 153.46333810810665,
+        "min_tps": 152.10915836097058,
+        "max_tps": 154.8175178552427,
+        "mean_ms_per_draft": 33.61954217477194,
+        "mean_accepted_per_draft": 4.172105036044268
+      },
+      "agent": {
+        "runs": 2,
+        "mean_tps": 71.3669403875844,
+        "min_tps": 69.4823365096233,
+        "max_tps": 73.2515442655455,
+        "mean_ms_per_draft": 33.31679099570846,
+        "mean_accepted_per_draft": 1.376709109007178
+      },
+      "two_concurrent": {
+        "runs": 1,
+        "mean_aggregate_tps": 125.45687640792181,
+        "min_tps": 125.45687640792181,
+        "max_tps": 125.45687640792181
+      },
+      "mixed_equal_output_tps": 96.82983691490892,
+      "preemptions": 0.0,
+      "sources": [
+        "baseline-bf16.summary.json"
+      ]
+    },
+    "int8_mtp6_single_row": {
+      "code": {
+        "runs": 2,
+        "mean_tps": 162.18191123414593,
+        "min_tps": 157.46029224170047,
+        "max_tps": 166.90353022659139,
+        "mean_ms_per_draft": 31.206988356759815,
+        "mean_accepted_per_draft": 4.068574148314936
+      },
+      "agent": {
+        "runs": 2,
+        "mean_tps": 79.68270740210095,
+        "min_tps": 77.1619662027944,
+        "max_tps": 82.20344860140749,
+        "mean_ms_per_draft": 30.92363523190719,
+        "mean_accepted_per_draft": 1.4629303176451023
+      },
+      "two_concurrent": {
+        "runs": 1,
+        "mean_aggregate_tps": 140.365061548013,
+        "min_tps": 140.365061548013,
+        "max_tps": 140.365061548013
+      },
+      "mixed_equal_output_tps": 106.04828456123006,
+      "preemptions": 0.0,
+      "sources": [
+        "candidate-int8-mtp6.summary.json"
+      ]
+    },
+    "int8_mtp4": {
+      "code": {
+        "runs": 2,
+        "mean_tps": 152.8465764941236,
+        "min_tps": 151.7906979660501,
+        "max_tps": 153.90245502219716,
+        "mean_ms_per_draft": 27.23518933780634,
+        "mean_accepted_per_draft": 3.1647766003594224
+      },
+      "agent": {
+        "runs": 2,
+        "mean_tps": 87.19325126693462,
+        "min_tps": 81.92414789825784,
+        "max_tps": 92.4623546356114,
+        "mean_ms_per_draft": 27.03161771110439,
+        "mean_accepted_per_draft": 1.355534499982185
+      },
+      "two_concurrent": {
+        "runs": 1,
+        "mean_aggregate_tps": 152.70278866470846,
+        "min_tps": 152.70278866470846,
+        "max_tps": 152.70278866470846
+      },
+      "mixed_equal_output_tps": 109.62004730489959,
+      "preemptions": 0.0,
+      "sources": [
+        "candidate-int8-mtp4.summary.json"
+      ]
+    },
+    "int8_mtp3": {
+      "code": {
+        "runs": 2,
+        "mean_tps": 142.66617762013516,
+        "min_tps": 142.4027784133818,
+        "max_tps": 142.9295768268885,
+        "mean_ms_per_draft": 25.207263704904204,
+        "mean_accepted_per_draft": 2.596206262872929
+      },
+      "agent": {
+        "runs": 2,
+        "mean_tps": 88.13004977550426,
+        "min_tps": 85.70474772043373,
+        "max_tps": 90.5553518305748,
+        "mean_ms_per_draft": 25.128319527062807,
+        "mean_accepted_per_draft": 1.2134577637574484
+      },
+      "two_concurrent": {
+        "runs": 1,
+        "mean_aggregate_tps": 156.64194533062167,
+        "min_tps": 156.64194533062167,
+        "max_tps": 156.64194533062167
+      },
+      "mixed_equal_output_tps": 107.84872819924576,
+      "preemptions": 0.0,
+      "sources": [
+        "candidate-int8-mtp3.summary.json"
+      ]
+    }
+  },
+  "temperature_one": {
+    "before_bf16_mtp6": {
+      "code": {
+        "runs": 2,
+        "mean_tps": 123.0057004958312,
+        "min_tps": 120.53209218851421,
+        "max_tps": 125.47930880314819,
+        "mean_ms_per_draft": 34.3437455604726,
+        "mean_accepted_per_draft": 3.2264540138224347
+      },
+      "agent": {
+        "runs": 2,
+        "mean_tps": 63.290687215815446,
+        "min_tps": 62.11657422526591,
+        "max_tps": 64.46480020636498,
+        "mean_ms_per_draft": 34.21618976416589,
+        "mean_accepted_per_draft": 1.1659528261712704
+      },
+      "two_concurrent": {
+        "runs": 1,
+        "mean_aggregate_tps": 92.31369501681716,
+        "min_tps": 92.31369501681716,
+        "max_tps": 92.31369501681716
+      },
+      "mixed_equal_output_tps": 83.1345466522657,
+      "preemptions": 0.0,
+      "sources": [
+        "baseline-temperature1.summary.json"
+      ]
+    },
+    "int8_mtp4": {
+      "code": {
+        "runs": 2,
+        "mean_tps": 133.09347636578644,
+        "min_tps": 129.86919529882354,
+        "max_tps": 136.31775743274937,
+        "mean_ms_per_draft": 28.37741044166356,
+        "mean_accepted_per_draft": 2.775134756690253
+      },
+      "agent": {
+        "runs": 2,
+        "mean_tps": 73.17270333292541,
+        "min_tps": 71.16849880622657,
+        "max_tps": 75.17690785962424,
+        "mean_ms_per_draft": 28.274015434999747,
+        "mean_accepted_per_draft": 1.0679293573023627
+      },
+      "two_concurrent": {
+        "runs": 2,
+        "mean_aggregate_tps": 118.65533643749168,
+        "min_tps": 114.3225957566954,
+        "max_tps": 122.98807711828798
+      },
+      "mixed_equal_output_tps": 93.35457690424074,
+      "preemptions": 0.0,
+      "sources": [
+        "final-int8-mtp4-temperature1.summary.json",
+        "restored-int8-mtp4-temperature1.summary.json"
+      ]
+    }
+  }
+}
