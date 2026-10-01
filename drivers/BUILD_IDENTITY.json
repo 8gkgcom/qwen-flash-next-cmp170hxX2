@@ -1,0 +1,10 @@
+{
+  "kernel": "6.8.0-138-generic",
+  "nvidia_version": "610.57.04",
+  "running_srcversion": "A7AA83788B88DA9780FC086",
+  "installed_and_build_module_sha256": "92ac798b50686181a79d5af2c3049c1be9c1cc1100d82d75ad1437726a79356c",
+  "matching_build_artifact": true,
+  "build_stamp": "610.57.04:6.8.0-138-generic:8gb:p2p=1:11f4fe47cf9d74b2e722512244c0224c86f01e53a63c7d69395cb21d4fcb2be8:f885c781b603fed659bdc7ae2d79fe5bfb20a18738a85de2188383b79b71508f",
+  "source_origin": "User-supplied cmpunlocker 0.4 P2P tree; source and licenses preserved.",
+  "binary_modules_included": false
+}
