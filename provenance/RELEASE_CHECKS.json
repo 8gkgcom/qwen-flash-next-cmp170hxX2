@@ -1,0 +1,30 @@
+{
+  "checked_at_local": "2026-10-01T16:50:54",
+  "scope": "Standalone NVFP4 deployment package; static/helper checks only, no model restart.",
+  "retained_changed_vllm_files": 12,
+  "retained_new_vllm_files": 1,
+  "runtime_source_and_preload_files": 430,
+  "preload_manifest_hashes_match": true,
+  "python_syntax_files": 39,
+  "missing_document_links": 0,
+  "console_dependencies": 0,
+  "overlay_helper": {
+    "matching_source_preview": true,
+    "mismatched_PLE_worker_rejected": true,
+    "preview_did_not_copy_files": true
+  },
+  "launcher": {
+    "bash_syntax": true,
+    "default_argv": true,
+    "parameter_overrides": true,
+    "invalid_mtp_rejected": true,
+    "key_redacted": true,
+    "model_started": false
+  },
+  "privacy_pattern_hits": 0,
+  "fresh_host_installation_tested": false,
+  "documentation_characters": {
+    "before": 34179,
+    "after": 14259
+  }
+}

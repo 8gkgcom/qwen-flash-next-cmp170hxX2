@@ -1,0 +1,57 @@
+{
+  "record_available": true,
+  "checked": 4758,
+  "changed": {
+    "vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py": {
+      "base_sha256": "81b4dcd0952492375c93bffc2cdf45f10b45ab5e117f2e1d949a147d144e64f0",
+      "deployed_sha256": "608a28d567679ab3ef3fa50925d11126a1d232feed587fa6a4f517e29ad534bd"
+    },
+    "vllm/models/qwen3_8_flash_next/nvidia/model.py": {
+      "base_sha256": "d900cd6fcacba18f460e00b3f018fbf36fbe6ecc310692b6adb1451f7f53cc17",
+      "deployed_sha256": "5d0fbc8beff861c00e4e8e7682ed14a2f58f84b4177cdd9aa0a10302284315ec"
+    },
+    "vllm/models/qwen3_8_flash_next/nvidia/model_state.py": {
+      "base_sha256": "f127380fcd884c1fb7b010a2c32065d55c319f65a1268c18ef21376e39ba8425",
+      "deployed_sha256": "84589563c923b635af6e9c1f5ad405333ba4b999b1dcbb547f2b9b1414e496e0"
+    },
+    "vllm/models/qwen3_8_flash_next/nvidia/mtp.py": {
+      "base_sha256": "7735cee47d0d1e4776bebd30d907e4a62160409ce4ef2d65611559f8d58af431",
+      "deployed_sha256": "8d2518d3d75d5eb8e19c4667a27fdd78e582cbf0e70fc05e3c640e9c038f025c"
+    },
+    "vllm/models/qwen3_8_flash_next/nvidia/ple_layer.py": {
+      "base_sha256": "a71144c1d36e06f22a2da1b1ada900076597fe5e824a911e7ada86249a0993e7",
+      "deployed_sha256": "51681a8acc12fb3db41fc93097ce8076758b24befc5db9415bb5343506b84801"
+    },
+    "vllm/v1/core/kv_cache_utils.py": {
+      "base_sha256": "f6643bad29b7b3cb044482b6736a042afa91a4f43a11f034317a8e8029d3a8a4",
+      "deployed_sha256": "fc6be495d5e7bf1607840f3b9c217bc1d9ad5b943d142576251a1fb714711c82"
+    },
+    "vllm/v1/core/sched/scheduler.py": {
+      "base_sha256": "c710f49e41e974e5b7b8f1cd2f5fb9722523f4da0165252e16351199ebd03124",
+      "deployed_sha256": "c03d08c8da01273b166245dff3d3d746801cf91b5ee25b25b253cb102aef813e"
+    },
+    "vllm/v1/executor/multiproc_executor.py": {
+      "base_sha256": "b911d837e167592acbfc36689808fc18c697d9624eaea527e56f6ea18b7a719d",
+      "deployed_sha256": "ac7cde5a6c3019a1b42cfb4a8c976e85f628ba51c14e56f661f38d472b3a1e28"
+    },
+    "vllm/v1/ple_offload/worker.py": {
+      "base_sha256": "f93a0a8c40ee3c536e60cb027f5d6e76cde0a51e62b540c82e2c15b2a72b7f5f",
+      "deployed_sha256": "fc760875d16320a7cb9f89124e5a3c50366948ef91b73cf3a3d75afffc60f290"
+    },
+    "vllm/v1/worker/gpu/model_runner.py": {
+      "base_sha256": "f08ba0f5ad41c8b9d5145fb1fba115ffd97f35f1e59017602e235ec0823abce8",
+      "deployed_sha256": "07d2e8497d84bbab12d06dab5701ef48e1948b81cb0c8a00c68515edac2814a2"
+    },
+    "vllm/v1/worker/gpu/pp_utils.py": {
+      "base_sha256": "79cd7d52f7c9fd3bc3f3a3bf61aec3dfe72ec6b4938d1b8b11845a0d75ae0ce4",
+      "deployed_sha256": "04396d64e4a91438c0bba202935e9f36198c8b81abe5771c62213a9d1cbf530d"
+    },
+    "vllm/v1/worker/gpu_worker.py": {
+      "base_sha256": "923767cea120a027ca36683bd48b7659eadbfa4cbd4acbcf52a80cee0c0a0ec4",
+      "deployed_sha256": "7a31d99e860ac5b0610bb26bb669523ad79bcae157798c1063b21182d514fcdc"
+    }
+  },
+  "new_source": [
+    "vllm/model_executor/layers/mamba/gdn/gdn_graph_runtime.py"
+  ]
+}
