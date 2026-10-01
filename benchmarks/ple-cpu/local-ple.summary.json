@@ -1,0 +1,267 @@
+{
+  "name": "local-ple",
+  "started": 1790836323.1571436,
+  "trials": [
+    {
+      "label": "code-0",
+      "thinking": false,
+      "temperature": 1.0,
+      "usage": {
+        "prompt_tokens": 60,
+        "total_tokens": 2108,
+        "completion_tokens": 2048,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "finish_reason": "length",
+      "decode_tps": 103.72805942496983,
+      "elapsed": 19.846904758000164,
+      "ttft": 0.10275878500397084,
+      "prompt_sha256": "56ae21fbfc88367661b8274dd46846be6615b6ae1bfffb698b4ab12cc37fc775",
+      "output_sha256": "053e8d38a2120ab94c012c6f016d9f832148114c49f83764eb02117964bc01be",
+      "accepted_per_draft": 1.712962962962963,
+      "drafts": 756.0,
+      "preemptions": 0.0,
+      "acceptance_by_position": {
+        "vllm:spec_decode_num_accepted_tokens_per_pos_total{engine=\"0\",model_name=\"qwen\",position=\"0\"}": 486.0,
+        "vllm:spec_decode_num_accepted_tokens_per_pos_total{engine=\"0\",model_name=\"qwen\",position=\"1\"}": 357.0,
+        "vllm:spec_decode_num_accepted_tokens_per_pos_total{engine=\"0\",model_name=\"qwen\",position=\"2\"}": 260.0,
+        "vllm:spec_decode_num_accepted_tokens_per_pos_total{engine=\"0\",model_name=\"qwen\",position=\"3\"}": 192.0
+      }
+    },
+    {
+      "label": "agent-0",
+      "thinking": true,
+      "temperature": 1.0,
+      "usage": {
+        "prompt_tokens": 112,
+        "total_tokens": 2160,
+        "completion_tokens": 2048,
+        "completion_tokens_details": {
+          "reasoning_tokens": 2047
+        }
+      },
+      "finish_reason": "length",
+      "decode_tps": 87.6643073814174,
+      "elapsed": 23.69300269700034,
+      "ttft": 0.3309467159997439,
+      "prompt_sha256": "ee8a6c261a646d02578ec1e131bbcd6e78236b1a9affba4ef7ef6caa775d5f7e",
+      "output_sha256": "374b97649c0a584b97c226f608c24d667170a83f70c0b415f849dce2a597ee41",
+      "accepted_per_draft": 1.2871508379888268,
+      "drafts": 895.0,
+      "preemptions": 0.0,
+      "acceptance_by_position": {
+        "vllm:spec_decode_num_accepted_tokens_per_pos_total{engine=\"0\",model_name=\"qwen\",position=\"0\"}": 559.0,
+        "vllm:spec_decode_num_accepted_tokens_per_pos_total{engine=\"0\",model_name=\"qwen\",position=\"1\"}": 314.0,
+        "vllm:spec_decode_num_accepted_tokens_per_pos_total{engine=\"0\",model_name=\"qwen\",position=\"2\"}": 181.0,
+        "vllm:spec_decode_num_accepted_tokens_per_pos_total{engine=\"0\",model_name=\"qwen\",position=\"3\"}": 98.0
+      }
+    },
+    {
+      "label": "code-1",
+      "thinking": false,
+      "temperature": 1.0,
+      "usage": {
+        "prompt_tokens": 60,
+        "total_tokens": 2108,
+        "completion_tokens": 2048,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "finish_reason": "length",
+      "decode_tps": 144.15436109464028,
+      "elapsed": 14.288545773000806,
+      "ttft": 0.08146041999862064,
+      "prompt_sha256": "56ae21fbfc88367661b8274dd46846be6615b6ae1bfffb698b4ab12cc37fc775",
+      "output_sha256": "ff9d99be6d521828b5d40f84fd78112c2c90ac37fc61142cb05525dab491a891",
+      "accepted_per_draft": 2.7944444444444443,
+      "drafts": 540.0,
+      "preemptions": 0.0,
+      "acceptance_by_position": {
+        "vllm:spec_decode_num_accepted_tokens_per_pos_total{engine=\"0\",model_name=\"qwen\",position=\"0\"}": 467.0,
+        "vllm:spec_decode_num_accepted_tokens_per_pos_total{engine=\"0\",model_name=\"qwen\",position=\"1\"}": 406.0,
+        "vllm:spec_decode_num_accepted_tokens_per_pos_total{engine=\"0\",model_name=\"qwen\",position=\"2\"}": 344.0,
+        "vllm:spec_decode_num_accepted_tokens_per_pos_total{engine=\"0\",model_name=\"qwen\",position=\"3\"}": 292.0
+      }
+    },
+    {
+      "label": "agent-1",
+      "thinking": true,
+      "temperature": 1.0,
+      "usage": {
+        "prompt_tokens": 112,
+        "total_tokens": 2160,
+        "completion_tokens": 2048,
+        "completion_tokens_details": {
+          "reasoning_tokens": 2048
+        }
+      },
+      "finish_reason": "length",
+      "decode_tps": 77.8891787215687,
+      "elapsed": 26.429081631998997,
+      "ttft": 0.13508705999993253,
+      "prompt_sha256": "ee8a6c261a646d02578ec1e131bbcd6e78236b1a9affba4ef7ef6caa775d5f7e",
+      "output_sha256": "aa877ed8447ba39dad39a578159e440fa7eab5fcbb380bda4fd29fd8cf48c9db",
+      "accepted_per_draft": 1.0439121756487026,
+      "drafts": 1002.0,
+      "preemptions": 0.0,
+      "acceptance_by_position": {
+        "vllm:spec_decode_num_accepted_tokens_per_pos_total{engine=\"0\",model_name=\"qwen\",position=\"0\"}": 558.0,
+        "vllm:spec_decode_num_accepted_tokens_per_pos_total{engine=\"0\",model_name=\"qwen\",position=\"1\"}": 282.0,
+        "vllm:spec_decode_num_accepted_tokens_per_pos_total{engine=\"0\",model_name=\"qwen\",position=\"2\"}": 141.0,
+        "vllm:spec_decode_num_accepted_tokens_per_pos_total{engine=\"0\",model_name=\"qwen\",position=\"3\"}": 65.0
+      }
+    }
+  ],
+  "pair": {
+    "elapsed": 16.33740467199823,
+    "aggregate_tps": 125.35650803277244,
+    "requests": [
+      {
+        "label": "pair-0",
+        "thinking": true,
+        "temperature": 1.0,
+        "usage": {
+          "prompt_tokens": 106,
+          "total_tokens": 1130,
+          "completion_tokens": 1024,
+          "completion_tokens_details": {
+            "reasoning_tokens": 1024
+          }
+        },
+        "finish_reason": "length",
+        "decode_tps": 64.70704290207115,
+        "elapsed": 16.021407868000097,
+        "ttft": 0.19600867199915228,
+        "prompt_sha256": "7eff90247e1895ed8f62f44d595dcebe87fc75b18953c89728279ff82220dd5a",
+        "output_sha256": "3b584f2f8767a40f9d33e65d1f22e777a2e4dd7d7d27f09e8e0cc30cabf741a5",
+        "accepted_per_draft": 0.9378585086042065,
+        "drafts": 1046.0,
+        "preemptions": 0.0,
+        "acceptance_by_position": {
+          "vllm:spec_decode_num_accepted_tokens_per_pos_total{engine=\"0\",model_name=\"qwen\",position=\"0\"}": 520.0,
+          "vllm:spec_decode_num_accepted_tokens_per_pos_total{engine=\"0\",model_name=\"qwen\",position=\"1\"}": 260.0,
+          "vllm:spec_decode_num_accepted_tokens_per_pos_total{engine=\"0\",model_name=\"qwen\",position=\"2\"}": 131.0,
+          "vllm:spec_decode_num_accepted_tokens_per_pos_total{engine=\"0\",model_name=\"qwen\",position=\"3\"}": 70.0
+        }
+      },
+      {
+        "label": "pair-1",
+        "thinking": true,
+        "temperature": 1.0,
+        "usage": {
+          "prompt_tokens": 106,
+          "total_tokens": 1130,
+          "completion_tokens": 1024,
+          "completion_tokens_details": {
+            "reasoning_tokens": 1024
+          }
+        },
+        "finish_reason": "length",
+        "decode_tps": 63.51800435060873,
+        "elapsed": 16.31677151999611,
+        "ttft": 0.19522012300149072,
+        "prompt_sha256": "120b3c5a45972d083a480755edc5b55df84eda665f4d0531b4ab6a663072c570",
+        "output_sha256": "acc5f644603c776258fd3f4d2f24a93805042d8f633295868722d8eafb0d67bf",
+        "accepted_per_draft": 0.9366130558183539,
+        "drafts": 1057.0,
+        "preemptions": 0.0,
+        "acceptance_by_position": {
+          "vllm:spec_decode_num_accepted_tokens_per_pos_total{engine=\"0\",model_name=\"qwen\",position=\"0\"}": 525.0,
+          "vllm:spec_decode_num_accepted_tokens_per_pos_total{engine=\"0\",model_name=\"qwen\",position=\"1\"}": 264.0,
+          "vllm:spec_decode_num_accepted_tokens_per_pos_total{engine=\"0\",model_name=\"qwen\",position=\"2\"}": 131.0,
+          "vllm:spec_decode_num_accepted_tokens_per_pos_total{engine=\"0\",model_name=\"qwen\",position=\"3\"}": 70.0
+        }
+      }
+    ]
+  },
+  "completed": 1790836424.7862048,
+  "gpu_samples": [
+    {
+      "time": 1790836323.22208,
+      "gpu": "0, 35, 80.91, 1410, 1458, 58, 62638\n1, 46, 66.19, 1470, 1728, 43, 53330"
+    },
+    {
+      "time": 1790836328.30462,
+      "gpu": "0, 39, 138.74, 1410, 1458, 86, 62678\n1, 49, 142.83, 1470, 1728, 89, 53332"
+    },
+    {
+      "time": 1790836333.3577864,
+      "gpu": "0, 39, 134.17, 1410, 1458, 89, 62678\n1, 50, 119.03, 1470, 1728, 92, 53332"
+    },
+    {
+      "time": 1790836338.4151752,
+      "gpu": "0, 40, 129.43, 1410, 1458, 87, 62678\n1, 51, 94.84, 1470, 1728, 90, 53332"
+    },
+    {
+      "time": 1790836343.4709778,
+      "gpu": "0, 40, 101.62, 1410, 1458, 87, 62678\n1, 52, 146.34, 1470, 1728, 89, 53332"
+    },
+    {
+      "time": 1790836348.524947,
+      "gpu": "0, 40, 147.30, 1410, 1458, 90, 62708\n1, 53, 102.50, 1470, 1728, 90, 53362"
+    },
+    {
+      "time": 1790836353.581128,
+      "gpu": "0, 40, 122.85, 1410, 1458, 87, 62708\n1, 53, 152.48, 1470, 1728, 88, 53362"
+    },
+    {
+      "time": 1790836358.634114,
+      "gpu": "0, 41, 132.72, 1410, 1458, 87, 62708\n1, 54, 123.46, 1470, 1728, 90, 53362"
+    },
+    {
+      "time": 1790836363.687089,
+      "gpu": "0, 41, 141.37, 1410, 1458, 89, 62708\n1, 55, 101.40, 1470, 1728, 89, 53362"
+    },
+    {
+      "time": 1790836368.7446296,
+      "gpu": "0, 41, 146.09, 1410, 1458, 90, 62708\n1, 55, 100.60, 1470, 1728, 90, 53362"
+    },
+    {
+      "time": 1790836373.7985177,
+      "gpu": "0, 41, 127.99, 1410, 1458, 88, 62708\n1, 56, 118.23, 1470, 1728, 91, 53362"
+    },
+    {
+      "time": 1790836378.8569422,
+      "gpu": "0, 41, 147.26, 1410, 1458, 89, 62708\n1, 56, 104.94, 1470, 1728, 89, 53362"
+    },
+    {
+      "time": 1790836383.9139504,
+      "gpu": "0, 42, 145.40, 1410, 1458, 88, 62708\n1, 57, 118.13, 1470, 1728, 91, 53362"
+    },
+    {
+      "time": 1790836388.9659607,
+      "gpu": "0, 42, 123.40, 1410, 1458, 89, 62708\n1, 57, 149.88, 1470, 1728, 89, 53362"
+    },
+    {
+      "time": 1790836394.0164745,
+      "gpu": "0, 42, 149.16, 1410, 1458, 88, 62708\n1, 58, 109.87, 1470, 1728, 89, 53362"
+    },
+    {
+      "time": 1790836399.0712323,
+      "gpu": "0, 42, 127.73, 1410, 1458, 89, 62708\n1, 58, 146.97, 1470, 1728, 91, 53362"
+    },
+    {
+      "time": 1790836404.125655,
+      "gpu": "0, 42, 108.86, 1410, 1458, 88, 62708\n1, 59, 162.83, 1470, 1728, 89, 53362"
+    },
+    {
+      "time": 1790836409.1734698,
+      "gpu": "0, 42, 152.17, 1410, 1458, 90, 62760\n1, 59, 181.53, 1470, 1728, 91, 53416"
+    },
+    {
+      "time": 1790836414.2259288,
+      "gpu": "0, 42, 111.20, 1410, 1458, 89, 62760\n1, 60, 182.85, 1470, 1728, 91, 53416"
+    },
+    {
+      "time": 1790836419.2808664,
+      "gpu": "0, 42, 141.58, 1410, 1458, 88, 62760\n1, 60, 108.35, 1470, 1728, 87, 53416"
+    },
+    {
+      "time": 1790836424.332956,
+      "gpu": "0, 43, 127.66, 1410, 1458, 89, 62760\n1, 61, 180.42, 1470, 1728, 91, 53416"
+    }
+  ]
+}

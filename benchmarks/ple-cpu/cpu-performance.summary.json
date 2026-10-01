@@ -1,0 +1,263 @@
+{
+  "name": "cpu-performance",
+  "started": 1790837447.5082262,
+  "trials": [
+    {
+      "label": "code-0",
+      "thinking": false,
+      "temperature": 1.0,
+      "usage": {
+        "prompt_tokens": 60,
+        "total_tokens": 2108,
+        "completion_tokens": 2048,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "finish_reason": "length",
+      "decode_tps": 144.45605260974577,
+      "elapsed": 14.272206389003259,
+      "ttft": 0.09482461299921852,
+      "prompt_sha256": "56ae21fbfc88367661b8274dd46846be6615b6ae1bfffb698b4ab12cc37fc775",
+      "output_sha256": "1826ef49d89ebd3cbeece813fc74eeefc3d098e1492f60cd88eff30d729414b9",
+      "accepted_per_draft": 2.6936936936936937,
+      "drafts": 555.0,
+      "preemptions": 0.0,
+      "acceptance_by_position": {
+        "vllm:spec_decode_num_accepted_tokens_per_pos_total{engine=\"0\",model_name=\"qwen\",position=\"0\"}": 472.0,
+        "vllm:spec_decode_num_accepted_tokens_per_pos_total{engine=\"0\",model_name=\"qwen\",position=\"1\"}": 401.0,
+        "vllm:spec_decode_num_accepted_tokens_per_pos_total{engine=\"0\",model_name=\"qwen\",position=\"2\"}": 341.0,
+        "vllm:spec_decode_num_accepted_tokens_per_pos_total{engine=\"0\",model_name=\"qwen\",position=\"3\"}": 281.0
+      }
+    },
+    {
+      "label": "agent-0",
+      "thinking": true,
+      "temperature": 1.0,
+      "usage": {
+        "prompt_tokens": 112,
+        "total_tokens": 2160,
+        "completion_tokens": 2048,
+        "completion_tokens_details": {
+          "reasoning_tokens": 2048
+        }
+      },
+      "finish_reason": "length",
+      "decode_tps": 82.75166668944921,
+      "elapsed": 25.01194904500153,
+      "ttft": 0.2631194619971211,
+      "prompt_sha256": "ee8a6c261a646d02578ec1e131bbcd6e78236b1a9affba4ef7ef6caa775d5f7e",
+      "output_sha256": "76d79bf3ee0bd9d3507abcb99a23f08193c0ce319d16e67a1919030bbdd3aa16",
+      "accepted_per_draft": 1.1016427104722792,
+      "drafts": 974.0,
+      "preemptions": 0.0,
+      "acceptance_by_position": {
+        "vllm:spec_decode_num_accepted_tokens_per_pos_total{engine=\"0\",model_name=\"qwen\",position=\"0\"}": 529.0,
+        "vllm:spec_decode_num_accepted_tokens_per_pos_total{engine=\"0\",model_name=\"qwen\",position=\"1\"}": 279.0,
+        "vllm:spec_decode_num_accepted_tokens_per_pos_total{engine=\"0\",model_name=\"qwen\",position=\"2\"}": 162.0,
+        "vllm:spec_decode_num_accepted_tokens_per_pos_total{engine=\"0\",model_name=\"qwen\",position=\"3\"}": 103.0
+      }
+    },
+    {
+      "label": "code-1",
+      "thinking": false,
+      "temperature": 1.0,
+      "usage": {
+        "prompt_tokens": 60,
+        "total_tokens": 2108,
+        "completion_tokens": 2048,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "finish_reason": "length",
+      "decode_tps": 129.07224680482534,
+      "elapsed": 15.93348734799656,
+      "ttft": 0.06633046799834119,
+      "prompt_sha256": "56ae21fbfc88367661b8274dd46846be6615b6ae1bfffb698b4ab12cc37fc775",
+      "output_sha256": "147d5344baeee055b563f6191f36c4b505b42550a29a0645b20523be1b2384d4",
+      "accepted_per_draft": 2.2979066022544283,
+      "drafts": 621.0,
+      "preemptions": 0.0,
+      "acceptance_by_position": {
+        "vllm:spec_decode_num_accepted_tokens_per_pos_total{engine=\"0\",model_name=\"qwen\",position=\"0\"}": 486.0,
+        "vllm:spec_decode_num_accepted_tokens_per_pos_total{engine=\"0\",model_name=\"qwen\",position=\"1\"}": 385.0,
+        "vllm:spec_decode_num_accepted_tokens_per_pos_total{engine=\"0\",model_name=\"qwen\",position=\"2\"}": 305.0,
+        "vllm:spec_decode_num_accepted_tokens_per_pos_total{engine=\"0\",model_name=\"qwen\",position=\"3\"}": 251.0
+      }
+    },
+    {
+      "label": "agent-1",
+      "thinking": true,
+      "temperature": 1.0,
+      "usage": {
+        "prompt_tokens": 112,
+        "total_tokens": 2160,
+        "completion_tokens": 2048,
+        "completion_tokens_details": {
+          "reasoning_tokens": 2048
+        }
+      },
+      "finish_reason": "length",
+      "decode_tps": 83.78059774872513,
+      "elapsed": 24.584255611000117,
+      "ttft": 0.13939479699911317,
+      "prompt_sha256": "ee8a6c261a646d02578ec1e131bbcd6e78236b1a9affba4ef7ef6caa775d5f7e",
+      "output_sha256": "b09e2f96e01b694359792076e6f8f03dc29d312e89797cd2803ea341accb4f23",
+      "accepted_per_draft": 1.130072840790843,
+      "drafts": 961.0,
+      "preemptions": 0.0,
+      "acceptance_by_position": {
+        "vllm:spec_decode_num_accepted_tokens_per_pos_total{engine=\"0\",model_name=\"qwen\",position=\"0\"}": 539.0,
+        "vllm:spec_decode_num_accepted_tokens_per_pos_total{engine=\"0\",model_name=\"qwen\",position=\"1\"}": 294.0,
+        "vllm:spec_decode_num_accepted_tokens_per_pos_total{engine=\"0\",model_name=\"qwen\",position=\"2\"}": 159.0,
+        "vllm:spec_decode_num_accepted_tokens_per_pos_total{engine=\"0\",model_name=\"qwen\",position=\"3\"}": 94.0
+      }
+    }
+  ],
+  "pair": {
+    "elapsed": 17.30965199300408,
+    "aggregate_tps": 118.31549246788587,
+    "requests": [
+      {
+        "label": "pair-0",
+        "thinking": true,
+        "temperature": 1.0,
+        "usage": {
+          "prompt_tokens": 106,
+          "total_tokens": 1130,
+          "completion_tokens": 1024,
+          "completion_tokens_details": {
+            "reasoning_tokens": 1024
+          }
+        },
+        "finish_reason": "length",
+        "decode_tps": 61.24152925667381,
+        "elapsed": 17.073426470000413,
+        "ttft": 0.3526656439935323,
+        "prompt_sha256": "7eff90247e1895ed8f62f44d595dcebe87fc75b18953c89728279ff82220dd5a",
+        "output_sha256": "60419f629ed2c12654bb718dc44328347258de69b8ca72785e4e1a05a506ddda",
+        "accepted_per_draft": 0.8688827331486612,
+        "drafts": 1083.0,
+        "preemptions": 0.0,
+        "acceptance_by_position": {
+          "vllm:spec_decode_num_accepted_tokens_per_pos_total{engine=\"0\",model_name=\"qwen\",position=\"0\"}": 510.0,
+          "vllm:spec_decode_num_accepted_tokens_per_pos_total{engine=\"0\",model_name=\"qwen\",position=\"1\"}": 235.0,
+          "vllm:spec_decode_num_accepted_tokens_per_pos_total{engine=\"0\",model_name=\"qwen\",position=\"2\"}": 122.0,
+          "vllm:spec_decode_num_accepted_tokens_per_pos_total{engine=\"0\",model_name=\"qwen\",position=\"3\"}": 74.0
+        }
+      },
+      {
+        "label": "pair-1",
+        "thinking": true,
+        "temperature": 1.0,
+        "usage": {
+          "prompt_tokens": 106,
+          "total_tokens": 1130,
+          "completion_tokens": 1024,
+          "completion_tokens_details": {
+            "reasoning_tokens": 1024
+          }
+        },
+        "finish_reason": "length",
+        "decode_tps": 59.719630038652994,
+        "elapsed": 17.298978258004354,
+        "ttft": 0.15210871300223516,
+        "prompt_sha256": "120b3c5a45972d083a480755edc5b55df84eda665f4d0531b4ab6a663072c570",
+        "output_sha256": "194832bc59aadc8a69dce4de639f4f3c1e5f903b83cab19fc15e97f8a9d086d3",
+        "accepted_per_draft": 0.8772893772893773,
+        "drafts": 1092.0,
+        "preemptions": 0.0,
+        "acceptance_by_position": {
+          "vllm:spec_decode_num_accepted_tokens_per_pos_total{engine=\"0\",model_name=\"qwen\",position=\"0\"}": 517.0,
+          "vllm:spec_decode_num_accepted_tokens_per_pos_total{engine=\"0\",model_name=\"qwen\",position=\"1\"}": 240.0,
+          "vllm:spec_decode_num_accepted_tokens_per_pos_total{engine=\"0\",model_name=\"qwen\",position=\"2\"}": 125.0,
+          "vllm:spec_decode_num_accepted_tokens_per_pos_total{engine=\"0\",model_name=\"qwen\",position=\"3\"}": 76.0
+        }
+      }
+    ]
+  },
+  "completed": 1790837545.5670633,
+  "gpu_samples": [
+    {
+      "time": 1790837447.5559516,
+      "gpu": "0, 36, 51.57, 1410, 1458, 57, 62638\n1, 46, 57.66, 1470, 1728, 71, 53330"
+    },
+    {
+      "time": 1790837452.6775563,
+      "gpu": "0, 39, 107.78, 1410, 1458, 90, 62678\n1, 50, 97.58, 1470, 1728, 92, 53332"
+    },
+    {
+      "time": 1790837457.7985642,
+      "gpu": "0, 40, 127.10, 1410, 1458, 90, 62678\n1, 51, 111.90, 1470, 1728, 93, 53332"
+    },
+    {
+      "time": 1790837462.8452852,
+      "gpu": "0, 38, 52.73, 1410, 1458, 90, 62680\n1, 52, 68.59, 1470, 1728, 71, 53362"
+    },
+    {
+      "time": 1790837467.8905752,
+      "gpu": "0, 40, 120.84, 1410, 1458, 90, 62708\n1, 53, 100.26, 1470, 1728, 92, 53362"
+    },
+    {
+      "time": 1790837472.9403481,
+      "gpu": "0, 41, 103.96, 1410, 1458, 90, 62708\n1, 53, 103.03, 1470, 1728, 91, 53362"
+    },
+    {
+      "time": 1790837477.9868164,
+      "gpu": "0, 41, 125.13, 1410, 1458, 90, 62708\n1, 54, 118.41, 1470, 1728, 93, 53362"
+    },
+    {
+      "time": 1790837483.0349646,
+      "gpu": "0, 41, 146.45, 1410, 1458, 90, 62708\n1, 55, 146.48, 1470, 1728, 93, 53362"
+    },
+    {
+      "time": 1790837488.0839124,
+      "gpu": "0, 41, 109.62, 1410, 1458, 90, 62708\n1, 55, 109.96, 1470, 1728, 80, 53362"
+    },
+    {
+      "time": 1790837493.133468,
+      "gpu": "0, 41, 147.44, 1410, 1458, 91, 62708\n1, 56, 122.72, 1470, 1728, 93, 53362"
+    },
+    {
+      "time": 1790837498.1821427,
+      "gpu": "0, 41, 155.54, 1410, 1458, 90, 62708\n1, 57, 158.99, 1470, 1728, 93, 53362"
+    },
+    {
+      "time": 1790837503.2278135,
+      "gpu": "0, 42, 118.13, 1410, 1458, 90, 62708\n1, 57, 140.88, 1470, 1728, 92, 53362"
+    },
+    {
+      "time": 1790837508.287878,
+      "gpu": "0, 42, 127.77, 1410, 1458, 90, 62708\n1, 57, 106.96, 1470, 1728, 92, 53362"
+    },
+    {
+      "time": 1790837513.3373673,
+      "gpu": "0, 42, 145.41, 1410, 1458, 90, 62708\n1, 58, 130.03, 1470, 1728, 92, 53362"
+    },
+    {
+      "time": 1790837518.381382,
+      "gpu": "0, 42, 133.48, 1410, 1458, 88, 62708\n1, 59, 160.08, 1470, 1728, 92, 53362"
+    },
+    {
+      "time": 1790837523.427855,
+      "gpu": "0, 42, 134.93, 1410, 1458, 88, 62708\n1, 59, 147.29, 1470, 1728, 90, 53362"
+    },
+    {
+      "time": 1790837528.4711075,
+      "gpu": "0, 42, 113.66, 1410, 1458, 53, 62708\n1, 59, 82.39, 1470, 1728, 68, 53362"
+    },
+    {
+      "time": 1790837533.5243738,
+      "gpu": "0, 45, 181.83, 1410, 1458, 100, 62726\n1, 62, 169.83, 1455, 1728, 100, 53362"
+    },
+    {
+      "time": 1790837538.5755057,
+      "gpu": "0, 45, 181.36, 1410, 1458, 100, 62726\n1, 62, 180.25, 1455, 1728, 100, 53362"
+    },
+    {
+      "time": 1790837543.6299317,
+      "gpu": "0, 46, 182.10, 1410, 1458, 100, 62726\n1, 63, 157.91, 1455, 1728, 100, 53362"
+    }
+  ]
+}
