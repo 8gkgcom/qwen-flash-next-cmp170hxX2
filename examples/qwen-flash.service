@@ -1,0 +1,25 @@
+[Unit]
+Description=Qwen Flash Next NVFP4 PP2 RAM PLE
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=600
+StartLimitBurst=2
+
+[Service]
+Type=simple
+User=model
+Group=model
+WorkingDirectory=/opt/qwen-flash
+EnvironmentFile=/etc/qwen-flash.env
+ExecStartPre=+/usr/bin/install -d -m 0750 -o model -g model /evidence
+ExecStart=/usr/bin/bash /opt/qwen-flash/examples/start-nvfp4.example.sh
+LimitMEMLOCK=infinity
+UMask=0077
+TimeoutStartSec=0
+TimeoutStopSec=120
+KillMode=control-group
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
