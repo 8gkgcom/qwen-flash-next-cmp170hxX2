@@ -1,0 +1,465 @@
+{
+  "completed_at": "2026-10-01T15:06:02.431682+08:00",
+  "model": "dealignai/Qwen3.8-Flash-Next-ABLITERATED-NVFP4",
+  "reference_project": "https://github.com/nguyenthimy2022kg-alt/Qwen-Flash-SM80-170HX",
+  "expected_benefit_order": [
+    "PP small-matrix adaptation",
+    "in-process RAM PLE",
+    "GPU1 PLE cache",
+    "CPU governor and worker affinity"
+  ],
+  "retained": [
+    "in-process RAM PLE using original FP8 bytes",
+    "CPU performance governor"
+  ],
+  "not_retained": {
+    "PP small matrices": "microkernels improved only some shapes; complete model did not improve",
+    "GPU1 4096 MiB PLE cache": "about 41% hit rate but mean decode round 2.7% slower",
+    "fixed CPU affinity": "single-request round improvement below 0.3%; original affinity restored"
+  },
+  "measurements": [
+    {
+      "case": "baseline",
+      "decode_round_ms": 28.111724219855205,
+      "code_mean_tps": 135.8561052131505,
+      "thinking_mean_tps": 73.50804404887135,
+      "two_request_aggregate_tps": 118.35281652081093,
+      "trials": [
+        {
+          "label": "code-0",
+          "tps": 138.46725855630993,
+          "round_ms": 28.11941297909038,
+          "accepted_per_draft": 2.8954372623574143,
+          "preemptions": 0.0
+        },
+        {
+          "label": "agent-0",
+          "tps": 71.6518125165857,
+          "round_ms": 28.13260723819189,
+          "accepted_per_draft": 1.014763779527559,
+          "preemptions": 0.0
+        },
+        {
+          "label": "code-1",
+          "tps": 133.24495186999107,
+          "round_ms": 28.150753100734097,
+          "accepted_per_draft": 2.7545787545787546,
+          "preemptions": 0.0
+        },
+        {
+          "label": "agent-1",
+          "tps": 75.36427558115702,
+          "round_ms": 28.04412356140445,
+          "accepted_per_draft": 1.1135190918472653,
+          "preemptions": 0.0
+        }
+      ]
+    },
+    {
+      "case": "kernels",
+      "decode_round_ms": 28.508449039795128,
+      "code_mean_tps": 126.67178076531671,
+      "thinking_mean_tps": 74.76688832128411,
+      "two_request_aggregate_tps": 120.26872201027128,
+      "trials": [
+        {
+          "label": "code-0",
+          "tps": 111.77151098566057,
+          "round_ms": 28.629969351561613,
+          "accepted_per_draft": 2.2015625,
+          "preemptions": 0.0
+        },
+        {
+          "label": "agent-0",
+          "tps": 72.78046030255597,
+          "round_ms": 28.423881260610557,
+          "accepted_per_draft": 1.0676767676767678,
+          "preemptions": 0.0
+        },
+        {
+          "label": "code-1",
+          "tps": 141.57205054497285,
+          "round_ms": 28.533273090724258,
+          "accepted_per_draft": 3.037475345167653,
+          "preemptions": 0.0
+        },
+        {
+          "label": "agent-1",
+          "tps": 76.75331634001226,
+          "round_ms": 28.446672456284084,
+          "accepted_per_draft": 1.1844349680170576,
+          "preemptions": 0.0
+        }
+      ]
+    },
+    {
+      "case": "local-ple",
+      "decode_round_ms": 26.192594979086252,
+      "code_mean_tps": 123.94121025980505,
+      "thinking_mean_tps": 82.77674305149304,
+      "two_request_aggregate_tps": 125.35650803277244,
+      "trials": [
+        {
+          "label": "code-0",
+          "tps": 103.72805942496983,
+          "round_ms": 26.11659520237592,
+          "accepted_per_draft": 1.712962962962963,
+          "preemptions": 0.0
+        },
+        {
+          "label": "agent-0",
+          "tps": 87.6643073814174,
+          "round_ms": 26.1028558446934,
+          "accepted_per_draft": 1.2871508379888268,
+          "preemptions": 0.0
+        },
+        {
+          "label": "code-1",
+          "tps": 144.15436109464028,
+          "round_ms": 26.309417320374415,
+          "accepted_per_draft": 2.7944444444444443,
+          "preemptions": 0.0
+        },
+        {
+          "label": "agent-1",
+          "tps": 77.8891787215687,
+          "round_ms": 26.241511548901265,
+          "accepted_per_draft": 1.0439121756487026,
+          "preemptions": 0.0
+        }
+      ]
+    },
+    {
+      "case": "gpu-cache-v2",
+      "decode_round_ms": 26.890205091123853,
+      "code_mean_tps": 137.72830136260848,
+      "thinking_mean_tps": 77.0439588286624,
+      "two_request_aggregate_tps": 118.66620737622854,
+      "trials": [
+        {
+          "label": "code-0",
+          "tps": 140.55159208085354,
+          "round_ms": 26.785378819862242,
+          "accepted_per_draft": 2.766544117647059,
+          "preemptions": 0.0
+        },
+        {
+          "label": "agent-0",
+          "tps": 77.90033865825276,
+          "round_ms": 26.881524648266865,
+          "accepted_per_draft": 1.0950920245398772,
+          "preemptions": 0.0
+        },
+        {
+          "label": "code-1",
+          "tps": 134.9050106443634,
+          "round_ms": 27.012782158370268,
+          "accepted_per_draft": 2.6423487544483986,
+          "preemptions": 0.0
+        },
+        {
+          "label": "agent-1",
+          "tps": 76.18757899907202,
+          "round_ms": 26.881134737996035,
+          "accepted_per_draft": 1.048,
+          "preemptions": 0.0
+        }
+      ]
+    },
+    {
+      "case": "cpu-performance",
+      "decode_round_ms": 25.48554628993353,
+      "code_mean_tps": 136.76414970728555,
+      "thinking_mean_tps": 83.26613221908717,
+      "two_request_aggregate_tps": 118.31549246788587,
+      "trials": [
+        {
+          "label": "code-0",
+          "tps": 144.45605260974577,
+          "round_ms": 25.544832028836108,
+          "accepted_per_draft": 2.6936936936936937,
+          "preemptions": 0.0
+        },
+        {
+          "label": "agent-0",
+          "tps": 82.75166668944921,
+          "round_ms": 25.40947595791007,
+          "accepted_per_draft": 1.1016427104722792,
+          "preemptions": 0.0
+        },
+        {
+          "label": "code-1",
+          "tps": 129.07224680482534,
+          "round_ms": 25.550977262477005,
+          "accepted_per_draft": 2.2979066022544283,
+          "preemptions": 0.0
+        },
+        {
+          "label": "agent-1",
+          "tps": 83.78059774872513,
+          "round_ms": 25.43689991051093,
+          "accepted_per_draft": 1.130072840790843,
+          "preemptions": 0.0
+        }
+      ]
+    },
+    {
+      "case": "cpu-affinity",
+      "decode_round_ms": 25.433660736271605,
+      "code_mean_tps": 136.7540076674786,
+      "thinking_mean_tps": 84.10968342264638,
+      "two_request_aggregate_tps": 130.79742413728695,
+      "trials": [
+        {
+          "label": "code-0",
+          "tps": 145.4142126435448,
+          "round_ms": 25.468287591319417,
+          "accepted_per_draft": 2.705244122965642,
+          "preemptions": 0.0
+        },
+        {
+          "label": "agent-0",
+          "tps": 84.03177877404518,
+          "round_ms": 25.360857097813124,
+          "accepted_per_draft": 1.130072840790843,
+          "preemptions": 0.0
+        },
+        {
+          "label": "code-1",
+          "tps": 128.09380269141238,
+          "round_ms": 25.459172871022393,
+          "accepted_per_draft": 2.2595541401273884,
+          "preemptions": 0.0
+        },
+        {
+          "label": "agent-1",
+          "tps": 84.1875880712476,
+          "round_ms": 25.446325384931484,
+          "accepted_per_draft": 1.1422594142259415,
+          "preemptions": 0.0
+        }
+      ]
+    },
+    {
+      "case": "local-ple-recheck",
+      "decode_round_ms": 26.26799802351596,
+      "code_mean_tps": 142.0895406064031,
+      "thinking_mean_tps": 78.3948522159879,
+      "two_request_aggregate_tps": 120.04732635362882,
+      "trials": [
+        {
+          "label": "code-0",
+          "tps": 142.5823880274752,
+          "round_ms": 26.355471741301308,
+          "accepted_per_draft": 2.759633027522936,
+          "preemptions": 0.0
+        },
+        {
+          "label": "agent-0",
+          "tps": 77.41732517519308,
+          "round_ms": 26.244161503965433,
+          "accepted_per_draft": 1.0317460317460319,
+          "preemptions": 0.0
+        },
+        {
+          "label": "code-1",
+          "tps": 141.59669318533096,
+          "round_ms": 26.250295125218674,
+          "accepted_per_draft": 2.7150635208711433,
+          "preemptions": 0.0
+        },
+        {
+          "label": "agent-1",
+          "tps": 79.3723792567827,
+          "round_ms": 26.222063723578433,
+          "accepted_per_draft": 1.0833333333333333,
+          "preemptions": 0.0
+        }
+      ]
+    }
+  ],
+  "selected_case": "cpu-performance",
+  "round_latency_reduction_percent": 9.34193117925799,
+  "equivalent_round_rate_increase_percent": 10.30457774004625,
+  "measurement_limits": "Output content and MTP acceptance vary even with a fixed sampling seed. TPS differences are not a guaranteed task-level speedup. Round time is (elapsed - TTFT) / speculative draft count.",
+  "active_settings": {
+    "model": "dealignai--Qwen3.8-Flash-Next-ABLITERATED-NVFP4",
+    "sm80_mode": "cpu_ple",
+    "sm80_ram_parallel": "pp2",
+    "sm80_pp_gpu0_layers": 24,
+    "sm80_pp_draft_int8": true,
+    "speculative_tokens": 4,
+    "max_model_len": 262400,
+    "max_num_seqs": 8,
+    "max_num_batched_tokens": 8192,
+    "gpu_memory_utilization": 0.95,
+    "temperature": 1.0,
+    "thinking_mode": "xhigh",
+    "served_model_name": "qwen",
+    "port": 8000,
+    "sm80_ple_lock_ram": true,
+    "sm80_ram_compute_optimizations": true
+  },
+  "precision": "Main NVFP4 checkpoint, FP8 PLE bytes and original KV dtype unchanged; no model files modified.",
+  "validation": {
+    "eight-slots": {
+      "wall_seconds": 6.407,
+      "max_running": 8,
+      "max_waiting": 0,
+      "metric_samples": 31,
+      "metric_errors": 0,
+      "peak_gpu_cache_usage": 0.303448275862069,
+      "preemptions": 0.0,
+      "results": [
+        {
+          "index": 0,
+          "http": 200,
+          "seconds": 6.191,
+          "prompt_tokens": 1005,
+          "output_tokens": 275,
+          "expected_marker": "NVFP4-1790838039-0",
+          "marker_retrieved": true,
+          "finish_reason": "length"
+        },
+        {
+          "index": 1,
+          "http": 200,
+          "seconds": 6.337,
+          "prompt_tokens": 1005,
+          "output_tokens": 275,
+          "expected_marker": "NVFP4-1790838039-1",
+          "marker_retrieved": true,
+          "finish_reason": "length"
+        },
+        {
+          "index": 2,
+          "http": 200,
+          "seconds": 6.042,
+          "prompt_tokens": 1005,
+          "output_tokens": 275,
+          "expected_marker": "NVFP4-1790838039-2",
+          "marker_retrieved": true,
+          "finish_reason": "length"
+        },
+        {
+          "index": 3,
+          "http": 200,
+          "seconds": 6.156,
+          "prompt_tokens": 1005,
+          "output_tokens": 275,
+          "expected_marker": "NVFP4-1790838039-3",
+          "marker_retrieved": true,
+          "finish_reason": "length"
+        },
+        {
+          "index": 4,
+          "http": 200,
+          "seconds": 6.156,
+          "prompt_tokens": 1005,
+          "output_tokens": 275,
+          "expected_marker": "NVFP4-1790838039-4",
+          "marker_retrieved": true,
+          "finish_reason": "length"
+        },
+        {
+          "index": 5,
+          "http": 200,
+          "seconds": 5.999,
+          "prompt_tokens": 1005,
+          "output_tokens": 275,
+          "expected_marker": "NVFP4-1790838039-5",
+          "marker_retrieved": true,
+          "finish_reason": "length"
+        },
+        {
+          "index": 6,
+          "http": 200,
+          "seconds": 5.999,
+          "prompt_tokens": 1005,
+          "output_tokens": 275,
+          "expected_marker": "NVFP4-1790838039-6",
+          "marker_retrieved": true,
+          "finish_reason": "length"
+        },
+        {
+          "index": 7,
+          "http": 200,
+          "seconds": 6.28,
+          "prompt_tokens": 1005,
+          "output_tokens": 275,
+          "expected_marker": "NVFP4-1790838039-7",
+          "marker_retrieved": true,
+          "finish_reason": "length"
+        }
+      ]
+    },
+    "two-262k": {
+      "wall_seconds": 80.675,
+      "max_running": 2,
+      "max_waiting": 0,
+      "metric_samples": 389,
+      "metric_errors": 0,
+      "peak_gpu_cache_usage": 0.653448275862069,
+      "preemptions": 0.0,
+      "results": [
+        {
+          "index": 0,
+          "http": 200,
+          "seconds": 80.559,
+          "prompt_tokens": 262077,
+          "output_tokens": 67,
+          "expected_marker": "NVFP4-1790838050-0",
+          "marker_retrieved": true,
+          "finish_reason": "length"
+        },
+        {
+          "index": 1,
+          "http": 200,
+          "seconds": 80.431,
+          "prompt_tokens": 262077,
+          "output_tokens": 67,
+          "expected_marker": "NVFP4-1790838050-1",
+          "marker_retrieved": true,
+          "finish_reason": "length"
+        }
+      ]
+    },
+    "api": [
+      {
+        "route": "/v1/chat/completions",
+        "status": 200,
+        "seconds": 0.14989912300370634
+      },
+      {
+        "route": "/v1/chat/completions",
+        "status": 200,
+        "seconds": 0.1619241470034467
+      },
+      {
+        "route": "/v1/chat/completions",
+        "status": 200,
+        "seconds": 0.32765590499911923
+      },
+      {
+        "route": "/v1/chat/completions",
+        "status": 200,
+        "seconds": 0.30811164699844085
+      },
+      {
+        "route": "/v1/responses",
+        "status": 200,
+        "seconds": 0.29345639700477477
+      },
+      {
+        "route": "/v1/messages",
+        "status": 200,
+        "seconds": 0.1660404439899139
+      }
+    ],
+    "ngram_rows": {
+      "synthetic_passed": 108,
+      "real_checkpoint_passed": 108,
+      "exact_row_identity": true
+    }
+  }
+}
