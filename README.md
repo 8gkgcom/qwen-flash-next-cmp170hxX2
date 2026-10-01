@@ -1,5 +1,7 @@
 # 双 CMP 170HX：Qwen3.8 Flash Next 部署与优化
 
+**[下载完整部署源码包（含 64GB/P2P 驱动源码）](https://github.com/8gkgcom/qwen-flash-next-cmp170hxX2/releases/tag/v2026.10.01)** · 约 36 MB。请下载发布页的 `qwen-flash-cmp170hx-share-20261001.zip`。仓库网页提供文档、示例和测试数据；部署时使用完整附件解压目录，GitHub 自动生成的 Source code 包不包含完整驱动及推理覆盖层。
+
 基于 [Qwen-Flash-SM80-170HX v0.1.7](https://github.com/nguyenthimy2022kg-alt/Qwen-Flash-SM80-170HX)，原生运行 [dealignai/Qwen3.8-Flash-Next-ABLITERATED-NVFP4](https://huggingface.co/dealignai/Qwen3.8-Flash-Next-ABLITERATED-NVFP4)。本仓库提供推理补丁、独立启动脚本、64GB/P2P 驱动源码和测试数据。
 
 **推荐组合：PP2 · 24/24 分层 · MTP4 · RAM PLE · CUDA Graph。** 实测日期：2026-10-01。

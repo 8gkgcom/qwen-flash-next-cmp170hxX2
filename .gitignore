@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+*.o
+*.ko
+*.so
+*.safetensors
+*.gguf
+.env
+logs/
+*.output.json
+*.local.json
+config.local.yml
+.build*/
+sm80-source-backup-*/
