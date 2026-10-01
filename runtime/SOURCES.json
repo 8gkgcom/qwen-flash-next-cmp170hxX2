@@ -1,0 +1,9 @@
+{
+  "upstream_project": "https://github.com/nguyenthimy2022kg-alt/Qwen-Flash-SM80-170HX",
+  "upstream_tag": "v0.1.7",
+  "base_image": "vllm/vllm-openai:qwen38-flash-next@sha256:fc120ece0a388cc0aa1caad4a9f1cd92113484ab7ec2fd0efadd62585be05bf8",
+  "vllm_version": "0.1.dev20073+g8e685d198",
+  "selection": "Upstream overlay import dependencies, all source changes detected against the installed wheel RECORD, local RAM/PP hooks and preload assets.",
+  "optional_cache_module": "sm80_ple_cache.py is retained because sm80_ple_local.py imports it when explicitly enabled. The supplied launcher disables it.",
+  "console_dependency": false
+}
