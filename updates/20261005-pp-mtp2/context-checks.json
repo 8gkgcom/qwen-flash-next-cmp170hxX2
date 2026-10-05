@@ -1,0 +1,62 @@
+{
+  "console-long-context-2x262k": {
+    "complete": true,
+    "simultaneous_requests": 2,
+    "configured_context": 262144,
+    "limitations": "Capacity and simple retrieval test; repetitive padding is not a broad long-context quality benchmark.",
+    "requests": [
+      {
+        "seconds": 79.7422880679951,
+        "usage": {
+          "prompt_tokens": 262128,
+          "total_tokens": 262131,
+          "completion_tokens": 3,
+          "prompt_tokens_details": null,
+          "completion_tokens_details": null
+        },
+        "finish_reason": "stop"
+      },
+      {
+        "seconds": 79.8335515249928,
+        "usage": {
+          "prompt_tokens": 262128,
+          "total_tokens": 262131,
+          "completion_tokens": 3,
+          "prompt_tokens_details": null,
+          "completion_tokens_details": null
+        },
+        "finish_reason": "stop"
+      }
+    ]
+  },
+  "after-vision-long-context-2x262k": {
+    "complete": true,
+    "simultaneous_requests": 2,
+    "configured_context": 262144,
+    "limitations": "Capacity and simple retrieval test; repetitive padding is not a broad long-context quality benchmark.",
+    "requests": [
+      {
+        "seconds": 80.31073177199869,
+        "usage": {
+          "prompt_tokens": 262128,
+          "total_tokens": 262144,
+          "completion_tokens": 16,
+          "prompt_tokens_details": null,
+          "completion_tokens_details": null
+        },
+        "finish_reason": "length"
+      },
+      {
+        "seconds": 80.34491825199802,
+        "usage": {
+          "prompt_tokens": 262128,
+          "total_tokens": 262144,
+          "completion_tokens": 16,
+          "prompt_tokens_details": null,
+          "completion_tokens_details": null
+        },
+        "finish_reason": "length"
+      }
+    ]
+  }
+}

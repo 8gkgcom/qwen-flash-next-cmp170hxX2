@@ -1,0 +1,157 @@
+[
+  {
+    "name": "warmup",
+    "concurrency": 1,
+    "responses": [
+      {
+        "usage": {
+          "prompt_tokens": 110,
+          "total_tokens": 238,
+          "completion_tokens": 128,
+          "completion_tokens_details": {
+            "reasoning_tokens": 128
+          }
+        },
+        "finish": "length",
+        "ttft": 0.27045800900668837,
+        "seconds": 1.3973119360016426,
+        "decode_seconds": 1.1267825949908001,
+        "decode_tps": 112.71029616945488
+      }
+    ],
+    "wall_seconds": 1.3994070070039015,
+    "delta": {
+      "vllm:generation_tokens_total": 128.0,
+      "vllm:spec_decode_num_drafts_total": 56.0,
+      "vllm:spec_decode_num_accepted_tokens_total": 71.0,
+      "vllm:num_preemptions_total": 0.0
+    },
+    "aggregate_tps": 91.46731391180117,
+    "accepted_per_round": 1.2678571428571428,
+    "estimated_round_ms": 20.12111776769286
+  },
+  {
+    "name": "code",
+    "concurrency": 1,
+    "responses": [
+      {
+        "usage": {
+          "prompt_tokens": 110,
+          "total_tokens": 1646,
+          "completion_tokens": 1536,
+          "completion_tokens_details": {
+            "reasoning_tokens": 1536
+          }
+        },
+        "finish": "length",
+        "ttft": 0.11614120801095851,
+        "seconds": 17.782842290005647,
+        "decode_seconds": 17.666616320988396,
+        "decode_tps": 86.88704005963952
+      }
+    ],
+    "wall_seconds": 17.783075108993216,
+    "delta": {
+      "vllm:generation_tokens_total": 1536.0,
+      "vllm:spec_decode_num_drafts_total": 927.0,
+      "vllm:spec_decode_num_accepted_tokens_total": 608.0,
+      "vllm:num_preemptions_total": 0.0
+    },
+    "aggregate_tps": 86.37426263937994,
+    "accepted_per_round": 0.6558791801510249,
+    "estimated_round_ms": 19.057838533968066
+  },
+  {
+    "name": "reason",
+    "concurrency": 1,
+    "responses": [
+      {
+        "usage": {
+          "prompt_tokens": 122,
+          "total_tokens": 1658,
+          "completion_tokens": 1536,
+          "completion_tokens_details": {
+            "reasoning_tokens": 1536
+          }
+        },
+        "finish": "length",
+        "ttft": 0.12731926700507756,
+        "seconds": 14.18538659499609,
+        "decode_seconds": 14.058007608997286,
+        "decode_tps": 109.19043741430204
+      }
+    ],
+    "wall_seconds": 14.185626092992607,
+    "delta": {
+      "vllm:generation_tokens_total": 1536.0,
+      "vllm:spec_decode_num_drafts_total": 738.0,
+      "vllm:spec_decode_num_accepted_tokens_total": 797.0,
+      "vllm:num_preemptions_total": 0.0
+    },
+    "aggregate_tps": 108.27861878854617,
+    "accepted_per_round": 1.0799457994579946,
+    "estimated_round_ms": 19.048790798099304
+  },
+  {
+    "name": "code",
+    "concurrency": 1,
+    "responses": [
+      {
+        "usage": {
+          "prompt_tokens": 110,
+          "total_tokens": 1646,
+          "completion_tokens": 1536,
+          "completion_tokens_details": {
+            "reasoning_tokens": 1536
+          }
+        },
+        "finish": "length",
+        "ttft": 0.11789668699202593,
+        "seconds": 17.575475982986973,
+        "decode_seconds": 17.457499149997602,
+        "decode_tps": 87.92782899835976
+      }
+    ],
+    "wall_seconds": 17.57573725299153,
+    "delta": {
+      "vllm:generation_tokens_total": 1536.0,
+      "vllm:spec_decode_num_drafts_total": 917.0,
+      "vllm:spec_decode_num_accepted_tokens_total": 618.0,
+      "vllm:num_preemptions_total": 0.0
+    },
+    "aggregate_tps": 87.39320450062831,
+    "accepted_per_round": 0.6739367502726281,
+    "estimated_round_ms": 19.037621755722576
+  },
+  {
+    "name": "reason",
+    "concurrency": 1,
+    "responses": [
+      {
+        "usage": {
+          "prompt_tokens": 122,
+          "total_tokens": 1658,
+          "completion_tokens": 1536,
+          "completion_tokens_details": {
+            "reasoning_tokens": 1536
+          }
+        },
+        "finish": "length",
+        "ttft": 0.12401655899884645,
+        "seconds": 13.83088262900128,
+        "decode_seconds": 13.706781069005956,
+        "decode_tps": 111.98836490289995
+      }
+    ],
+    "wall_seconds": 13.83116391999647,
+    "delta": {
+      "vllm:generation_tokens_total": 1536.0,
+      "vllm:spec_decode_num_drafts_total": 720.0,
+      "vllm:spec_decode_num_accepted_tokens_total": 816.0,
+      "vllm:num_preemptions_total": 0.0
+    },
+    "aggregate_tps": 111.05356055966634,
+    "accepted_per_round": 1.1333333333333333,
+    "estimated_round_ms": 19.03719592917494
+  }
+]

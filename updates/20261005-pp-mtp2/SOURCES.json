@@ -1,0 +1,18 @@
+{
+  "upstream": "https://github.com/nguyenthimy2022kg-alt/Qwen-Flash-SM80-170HX",
+  "commit": "11421471c050cccc036b004e91345583e33993b2",
+  "tag": "v0.2.0",
+  "vllm": "0.1.dev20073+g8e685d198",
+  "scope": "Incremental patches for an existing Orca PP2/RAM deployment; not the old v0.1.7 deployment bundle.",
+  "upstream_files": [
+    "m7_joint_runtime.py",
+    "m7_joint_kernels.py"
+  ],
+  "adapted_files": [
+    "m3_hc_runtime.py",
+    "m3_hc_kernels.py"
+  ],
+  "binary_distribution": false,
+  "weights_included": false,
+  "console_included": false
+}

@@ -1,0 +1,19 @@
+{
+  "date": "2026-10-05",
+  "scope": "Offline packaging checks only. No GPU benchmark or service restart during publication.",
+  "passed": 12,
+  "checks": [
+    "All Python sources parse",
+    "Exact pre-change fixture hashes match",
+    "Install preview does not modify sources",
+    "Unknown source version fails without modifications",
+    "All patches install and match exact retained hashes",
+    "Repeated installation is idempotent",
+    "Published scheduler regression CLI passes 42 checks",
+    "Restore preview does not modify sources",
+    "Restore rejects subsequently changed sources",
+    "Full restore recovers original hashes and removes only added modules",
+    "Preload collector filters SM80, deduplicates and preserves valid hashes",
+    "Preload collector rejects corrupt base before writing output"
+  ]
+}

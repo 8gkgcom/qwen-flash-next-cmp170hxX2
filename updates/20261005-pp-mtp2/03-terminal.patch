@@ -1,0 +1,28 @@
+--- a/vllm/v1/core/sched/scheduler.py
++++ b/vllm/v1/core/sched/scheduler.py
+@@ -555,13 +555,20 @@
+                 req_index += 1
+                 continue
+ 
+-            # Synchronous V2 decode knows the actual draft count. Near the
+-            # model-length boundary shorten that count before enforcing full
+-            # verification, otherwise the full-batch guard can defer forever.
+-            # Async placeholders need separate handling: do not alter them here.
++            # At the context boundary, a full verification batch may no longer
++            # fit. Shorten the draft only when its state is settled. Async V2
++            # uses placeholder draft IDs but the worker consumes the scheduled
++            # count, so a drained request can safely use fewer (or zero) drafts.
++            # Never rewrite draft state belonging to an in-flight async step.
+             if (
+                 self.use_v2_model_runner
+-                and not self.scheduler_config.async_scheduling
++                and (
++                    not self.scheduler_config.async_scheduling
++                    or (
++                        request.num_output_placeholders == 0
++                        and request.num_in_flight_tokens == 0
++                    )
++                )
+                 and request.spec_token_ids
+                 and not request.is_prefill_chunk
+             ):

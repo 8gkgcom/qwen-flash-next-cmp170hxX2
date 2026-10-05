@@ -1,0 +1,95 @@
+{
+  "measurements": [
+    {
+      "case": "baseline",
+      "samples": 4,
+      "round_ms": 19.066222069902434,
+      "code_tps": 87.91420986018232,
+      "reason_tps": 113.8098861495202
+    },
+    {
+      "case": "metadata",
+      "samples": 4,
+      "round_ms": 19.04536175424122,
+      "code_tps": 87.40743452899963,
+      "reason_tps": 110.58940115860099
+    },
+    {
+      "case": "m3-hc",
+      "samples": 4,
+      "round_ms": 18.306760414558862,
+      "code_tps": 89.92909990059829,
+      "reason_tps": 114.4620051586346
+    },
+    {
+      "case": "pre-terminal-final",
+      "samples": 4,
+      "round_ms": 18.358686650850302,
+      "code_tps": 90.52483518357798,
+      "reason_tps": 118.14415091176787
+    },
+    {
+      "case": "final",
+      "samples": 4,
+      "round_ms": 18.32281122078882,
+      "code_tps": 90.55302648228125,
+      "reason_tps": 110.8791997520473
+    }
+  ],
+  "retained": "M3-only HC fusion; original-function fallback; QSA startup preload; drained async-MTP terminal scheduling fix",
+  "round_time_reduction_percent": 3.8990988691312123,
+  "constant_acceptance_throughput_gain_percent": 4.0572968861358305,
+  "configuration": {
+    "max_model_len": 262144,
+    "max_num_seqs": 4,
+    "speculative_tokens": 2,
+    "gpu_memory_utilization": 0.95,
+    "temperature": 1.0,
+    "thinking_mode": "xhigh",
+    "sm80_ram_parallel": "pp2"
+  },
+  "health": 200,
+  "functional_checks": 7,
+  "deep_checks": {
+    "math": "pass",
+    "code": "pass",
+    "code_cases": 9331
+  },
+  "terminal_scheduler_checks": 42,
+  "four_queue_checks": [
+    {
+      "name": "code",
+      "concurrency": 4,
+      "aggregate_tps": 253.03725963350536,
+      "wall_seconds": 8.093669694993878
+    },
+    {
+      "name": "reason",
+      "concurrency": 4,
+      "aggregate_tps": 302.36139626460584,
+      "wall_seconds": 6.77335144400422
+    }
+  ],
+  "long_context": {
+    "requests": 2,
+    "input_tokens_each": 262128,
+    "output_tokens_each": 16,
+    "total_tokens_each": 262144,
+    "cold_start_passed": true,
+    "after_vision_passed": true
+  },
+  "source_config_unchanged": true,
+  "experiment_launcher_removed": true,
+  "profiler_disabled": true,
+  "limitations": [
+    "Round time is stream decode seconds divided by speculative draft count, not GPU-only kernel time.",
+    "Each speed sample uses 1536 output tokens; speed includes thinking tokens and is not a completed-answer quality score.",
+    "Sampling output and draft acceptance vary between runs; token/s is not a fixed speedup.",
+    "The final reasoning sample is slower in token/s than baseline despite lower round time; do not report universal throughput gains.",
+    "Four scheduling slots do not imply four simultaneous full 262K requests. Two full budgets were retested.",
+    "Long-context test uses repetitive padding and a simple retrieval instruction.",
+    "TEP2 and history drafts were not modified in this round."
+  ],
+  "date": "2026-10-05",
+  "scope": "OrcaRouter BF16-derived ModelOpt NVFP4, PP2/RAM, two CMP 170HX"
+}

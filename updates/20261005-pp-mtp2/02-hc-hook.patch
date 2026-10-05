@@ -1,0 +1,11 @@
+--- a/sm80_ram_hooks.py
++++ b/sm80_ram_hooks.py
+@@ -37,5 +37,8 @@
+         local_ple()
+         from sm80_pp_draft_int8 import install as pp_draft
+         pp_draft()
++        if os.environ.get("Q38_PP_M3_HC") == "1":
++            from m3_hc_runtime import install as m3_hc
++            m3_hc()
+     _installed = True
+     print('SM80_RAM_COMPUTE_HOOKS_INSTALLED', os.environ.get('Q38_RAM_PARALLEL'), flush=True)

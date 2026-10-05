@@ -1,0 +1,16 @@
+--- a/vllm/v1/worker/gpu/model_runner.py
++++ b/vllm/v1/worker/gpu/model_runner.py
+@@ -1079,10 +1079,9 @@
+                 idx_mapping = outputs["idx_mapping"]
+                 self.postprocess_sampled(**outputs)
+                 if draft_tokens is not None:
+-                    valid = idx_mapping >= 0
+-                    self.req_states.draft_tokens[idx_mapping[valid]] = draft_tokens[
+-                        valid
+-                    ]
++                    # Fixed-shape masked scatter avoids CUDA nonzero host sync.
++                    from pp_draft_scatter import restore_drafts
++                    restore_drafts(self.req_states.draft_tokens, idx_mapping, draft_tokens)
+ 
+     def add_requests(self, scheduler_output: SchedulerOutput) -> None:
+         for new_req_data in scheduler_output.scheduled_new_reqs:

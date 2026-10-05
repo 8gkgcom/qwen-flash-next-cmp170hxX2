@@ -1,0 +1,44 @@
+{
+  "model_origin": "orcarouter/Qwen3.8-Flash-Next-Uncensored",
+  "model_export": "Locally converted ModelOpt NVFP4 / SM80 Marlin W4A16; not an HF model ID",
+  "parallel": {
+    "tensor": 1,
+    "pipeline": 2,
+    "layers": [
+      24,
+      24
+    ],
+    "physical_gpu_order": [
+      1,
+      0
+    ],
+    "mtp_physical_gpu": 0
+  },
+  "max_model_len": 262144,
+  "max_num_seqs": 4,
+  "max_num_batched_tokens": 8192,
+  "long_prefill_token_threshold": 1280,
+  "gpu_memory_utilization": 0.95,
+  "dtype": "bfloat16",
+  "kv_cache_dtype": "auto",
+  "mtp": true,
+  "num_speculative_tokens": 2,
+  "temperature": 1.0,
+  "top_p": 0.95,
+  "top_k": 20,
+  "presence_penalty": 0.5,
+  "reasoning_effort": "xhigh",
+  "ple": "RAM mmap, prewarm and mlock; in-process native gather",
+  "cuda_graph": "FULL_AND_PIECEWISE",
+  "prefix_caching": true,
+  "chunked_prefill": true,
+  "async_scheduling": true,
+  "expert_cpu_offload": false,
+  "gds": false,
+  "history_drafts": false,
+  "pcie_ipc": false,
+  "compact_vocab": false,
+  "served_model_name": "qwen",
+  "port": 8000,
+  "capacity_note": "Four scheduler slots share KV; validated two simultaneous full 262144-token totals."
+}

@@ -1,0 +1,381 @@
+{
+  "pass_count": 42,
+  "regression_reproduced": true,
+  "checks": [
+    {
+      "length": 64,
+      "remaining": 1,
+      "drafts": 2,
+      "asynchronous": false,
+      "result": [
+        1,
+        0
+      ]
+    },
+    {
+      "length": 64,
+      "remaining": 1,
+      "drafts": 2,
+      "asynchronous": true,
+      "result": [
+        1,
+        0
+      ]
+    },
+    {
+      "length": 64,
+      "remaining": 2,
+      "drafts": 2,
+      "asynchronous": false,
+      "result": [
+        2,
+        1
+      ]
+    },
+    {
+      "length": 64,
+      "remaining": 2,
+      "drafts": 2,
+      "asynchronous": true,
+      "result": [
+        2,
+        1
+      ]
+    },
+    {
+      "length": 64,
+      "remaining": 3,
+      "drafts": 2,
+      "asynchronous": false,
+      "result": [
+        3,
+        2
+      ]
+    },
+    {
+      "length": 64,
+      "remaining": 3,
+      "drafts": 2,
+      "asynchronous": true,
+      "result": [
+        3,
+        2
+      ]
+    },
+    {
+      "length": 64,
+      "remaining": 8,
+      "drafts": 2,
+      "asynchronous": false,
+      "result": [
+        3,
+        2
+      ]
+    },
+    {
+      "length": 64,
+      "remaining": 8,
+      "drafts": 2,
+      "asynchronous": true,
+      "result": [
+        3,
+        2
+      ]
+    },
+    {
+      "length": 64,
+      "remaining": 1,
+      "drafts": 5,
+      "asynchronous": false,
+      "result": [
+        1,
+        0
+      ]
+    },
+    {
+      "length": 64,
+      "remaining": 1,
+      "drafts": 5,
+      "asynchronous": true,
+      "result": [
+        1,
+        0
+      ]
+    },
+    {
+      "length": 64,
+      "remaining": 2,
+      "drafts": 5,
+      "asynchronous": false,
+      "result": [
+        2,
+        1
+      ]
+    },
+    {
+      "length": 64,
+      "remaining": 2,
+      "drafts": 5,
+      "asynchronous": true,
+      "result": [
+        2,
+        1
+      ]
+    },
+    {
+      "length": 64,
+      "remaining": 3,
+      "drafts": 5,
+      "asynchronous": false,
+      "result": [
+        3,
+        2
+      ]
+    },
+    {
+      "length": 64,
+      "remaining": 3,
+      "drafts": 5,
+      "asynchronous": true,
+      "result": [
+        3,
+        2
+      ]
+    },
+    {
+      "length": 64,
+      "remaining": 8,
+      "drafts": 5,
+      "asynchronous": false,
+      "result": [
+        6,
+        5
+      ]
+    },
+    {
+      "length": 64,
+      "remaining": 8,
+      "drafts": 5,
+      "asynchronous": true,
+      "result": [
+        6,
+        5
+      ]
+    },
+    {
+      "length": 64,
+      "placeholders": 1,
+      "in_flight": 0,
+      "result": [
+        0,
+        2
+      ]
+    },
+    {
+      "length": 64,
+      "placeholders": 0,
+      "in_flight": 1,
+      "result": [
+        0,
+        2
+      ]
+    },
+    {
+      "length": 64,
+      "placeholders": 3,
+      "in_flight": 3,
+      "result": [
+        0,
+        2
+      ]
+    },
+    {
+      "length": 262144,
+      "remaining": 1,
+      "drafts": 2,
+      "asynchronous": false,
+      "result": [
+        1,
+        0
+      ]
+    },
+    {
+      "length": 262144,
+      "remaining": 1,
+      "drafts": 2,
+      "asynchronous": true,
+      "result": [
+        1,
+        0
+      ]
+    },
+    {
+      "length": 262144,
+      "remaining": 2,
+      "drafts": 2,
+      "asynchronous": false,
+      "result": [
+        2,
+        1
+      ]
+    },
+    {
+      "length": 262144,
+      "remaining": 2,
+      "drafts": 2,
+      "asynchronous": true,
+      "result": [
+        2,
+        1
+      ]
+    },
+    {
+      "length": 262144,
+      "remaining": 3,
+      "drafts": 2,
+      "asynchronous": false,
+      "result": [
+        3,
+        2
+      ]
+    },
+    {
+      "length": 262144,
+      "remaining": 3,
+      "drafts": 2,
+      "asynchronous": true,
+      "result": [
+        3,
+        2
+      ]
+    },
+    {
+      "length": 262144,
+      "remaining": 8,
+      "drafts": 2,
+      "asynchronous": false,
+      "result": [
+        3,
+        2
+      ]
+    },
+    {
+      "length": 262144,
+      "remaining": 8,
+      "drafts": 2,
+      "asynchronous": true,
+      "result": [
+        3,
+        2
+      ]
+    },
+    {
+      "length": 262144,
+      "remaining": 1,
+      "drafts": 5,
+      "asynchronous": false,
+      "result": [
+        1,
+        0
+      ]
+    },
+    {
+      "length": 262144,
+      "remaining": 1,
+      "drafts": 5,
+      "asynchronous": true,
+      "result": [
+        1,
+        0
+      ]
+    },
+    {
+      "length": 262144,
+      "remaining": 2,
+      "drafts": 5,
+      "asynchronous": false,
+      "result": [
+        2,
+        1
+      ]
+    },
+    {
+      "length": 262144,
+      "remaining": 2,
+      "drafts": 5,
+      "asynchronous": true,
+      "result": [
+        2,
+        1
+      ]
+    },
+    {
+      "length": 262144,
+      "remaining": 3,
+      "drafts": 5,
+      "asynchronous": false,
+      "result": [
+        3,
+        2
+      ]
+    },
+    {
+      "length": 262144,
+      "remaining": 3,
+      "drafts": 5,
+      "asynchronous": true,
+      "result": [
+        3,
+        2
+      ]
+    },
+    {
+      "length": 262144,
+      "remaining": 8,
+      "drafts": 5,
+      "asynchronous": false,
+      "result": [
+        6,
+        5
+      ]
+    },
+    {
+      "length": 262144,
+      "remaining": 8,
+      "drafts": 5,
+      "asynchronous": true,
+      "result": [
+        6,
+        5
+      ]
+    },
+    {
+      "length": 262144,
+      "placeholders": 1,
+      "in_flight": 0,
+      "result": [
+        0,
+        2
+      ]
+    },
+    {
+      "length": 262144,
+      "placeholders": 0,
+      "in_flight": 1,
+      "result": [
+        0,
+        2
+      ]
+    },
+    {
+      "length": 262144,
+      "placeholders": 3,
+      "in_flight": 3,
+      "result": [
+        0,
+        2
+      ]
+    }
+  ],
+  "scope": "Actual scheduler draft/admission AST only; full live API validation is separate."
+}

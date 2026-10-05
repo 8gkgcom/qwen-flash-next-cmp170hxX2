@@ -1,0 +1,17 @@
+{
+  "sm80_ram_hooks.py": {
+    "before": "0d02824d14ae282413f1bd53ebbac25a0b4ddd84ca083f762243e32e9c1b61fe",
+    "after": "d060b81d643b72afe6f179bc13ec12cfcd8c1fdd6f0faf3ede0e633cb7340db8",
+    "patch": "02-hc-hook.patch"
+  },
+  "vllm/v1/core/sched/scheduler.py": {
+    "before": "a3055b1bc4fc7b9cd6ec4fb8efd998faa7262d32900bb3ea6320ba9bbaf7337a",
+    "after": "0737a1ce865fdbff31cee7d278b577b5ee078c85e2f8aed60e6dad558b3d0b7b",
+    "patch": "03-terminal.patch"
+  },
+  "vllm/v1/worker/gpu/model_runner.py": {
+    "before": "a30e480dddfeeec4d9ddd6a63acd263defbebf3947073c62a7e4960b02082957",
+    "after": "8d4cef9b5b6900809f5f03088d2512e74cb1eb4938a9a960fdf778f7d3829c91",
+    "patch": "01-scatter.patch"
+  }
+}
