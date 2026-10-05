@@ -1,5 +1,19 @@
 # 双 CMP 170HX：Qwen3.8 Flash Next 部署与优化
 
+## 2026-10-05：Orca NVFP4 单路优化
+
+**[本轮源码、安装与回退、实测结果](updates/20261005-pp-mtp2/README.md)** · [当前推荐参数](updates/20261005-pp-mtp2/recommended.json)
+
+基于作者 v0.2.0 和已有 Orca PP2/RAM 适配，保留固定形状 draft scatter、三行 HC 融合，修复长输入内核加载及上下文末端停滞。当前组合为 **PP2 24/24、MTP2、262144 上下文、4 槽位、8192 预填充、95% 显存、RAM PLE、xhigh、温度 1.0**。本轮 GPU0 为 PCIe Gen2 ×16、GPU1 为 Gen2 ×4。
+
+同条件平均每轮耗时 **19.066 → 18.323 ms，约下降 3.9%**；代码样本稍快、最终推理样本稍慢，不代表所有任务都提速。两路完整 262K、四路短请求及接口检查通过；4 槽位不等于 4 路完整 262K。
+
+这是对已有兼容环境的**增量补丁**，安装器校验基础源码版本；不能直接覆盖下方旧版本部署包。包含去敏后的源码与结果，不包含控制台、凭据、模型权重或本机编译缓存。
+
+## 2026-10-01 历史方案：dealignai NVFP4 / v0.1.7
+
+以下部署、硬件状态、参数和实测均属于 10 月 1 日的历史方案，与上方 Orca 更新分开使用。
+
 **[下载完整部署源码包（含 64GB/P2P 驱动源码）](https://github.com/8gkgcom/qwen-flash-next-cmp170hxX2/releases/tag/v2026.10.01)** · 约 36 MB。请下载发布页的 `qwen-flash-cmp170hx-share-20261001.zip`。仓库网页提供文档、示例和测试数据；部署时使用完整附件解压目录，GitHub 自动生成的 Source code 包不包含完整驱动及推理覆盖层。
 
 基于 [Qwen-Flash-SM80-170HX v0.1.7](https://github.com/nguyenthimy2022kg-alt/Qwen-Flash-SM80-170HX)，原生运行 [dealignai/Qwen3.8-Flash-Next-ABLITERATED-NVFP4](https://huggingface.co/dealignai/Qwen3.8-Flash-Next-ABLITERATED-NVFP4)。本仓库提供推理补丁、独立启动脚本、64GB/P2P 驱动源码和测试数据。
