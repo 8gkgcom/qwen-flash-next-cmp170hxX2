@@ -1,5 +1,7 @@
 # 来源与许可
 
+2026-10-06 驱动更新的完整源码保留 NVIDIA 的 `COPYING` 与各文件许可，cmpunlocker 的 GPLv2 许可保留在 [CMPUNLOCKER_LICENSE](drivers/610.57.04-sm74-p2p/CMPUNLOCKER_LICENSE)。SM 解锁增量来源、P2P 基础及兼容修改见 [PATCH_SOURCES.json](drivers/610.57.04-sm74-p2p/PATCH_SOURCES.json)；并非包含全部 v0.5 功能。
+
 2026-10-05 增量更新使用固定上游提交 `11421471c050cccc036b004e91345583e33993b2`。继承的 M7 源码及 M3 适配保留 [Apache-2.0 许可](updates/20261005-pp-mtp2/UPSTREAM_LICENSE) 与 [NOTICE](updates/20261005-pp-mtp2/UPSTREAM_NOTICE)；文件来源见 [SOURCES.json](updates/20261005-pp-mtp2/SOURCES.json)。OrcaRouter 权重不随更新发布。
 
 | 组件 | 来源 / 许可位置 |

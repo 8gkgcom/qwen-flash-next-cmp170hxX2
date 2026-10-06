@@ -1,5 +1,11 @@
 # 双 CMP 170HX：Qwen3.8 Flash Next 部署与优化
 
+## 2026-10-06：当前 64GB / P2P / 74 SM 驱动源码
+
+[源码、编译、安装与回退](drivers/610.57.04-sm74-p2p/README.md) · [完整源码附件](https://github.com/8gkgcom/qwen-flash-next-cmp170hxX2/releases/tag/v2026.10.06-driver-sm74)
+
+NVIDIA **610.57.04**，验证内核 **6.8.0-138-generic**。保留原有 64GB/BAR1/P2P 与 Linux 6.8 兼容修改，仅加入 SM 解锁增量；两卡实测 **74 SM**。3871 个源码文件与当前构建目录一致，5 个安装模块与构建产物哈希一致。未启用 v0.5 ECC 改动或 Gen3/Gen4 实验。附件含完整已打补丁源码、原版到当前版的补丁及校验清单，不含编译模块和本机配置。
+
 ## 2026-10-05：Orca NVFP4 单路优化
 
 **[本轮源码、安装与回退、实测结果](updates/20261005-pp-mtp2/README.md)** · [当前推荐参数](updates/20261005-pp-mtp2/recommended.json)
