@@ -1,0 +1,12 @@
+{
+  "source_files_verified": 3871,
+  "archive_members": 3883,
+  "archive_bytes": 27787284,
+  "archive_sha256": "83ce5c35115d36921113cda825874ac27f87ac48ffd1c67fa385a7fffad844ac",
+  "compiled_modules_included": false,
+  "privacy_scan": "passed",
+  "scope": "Source export and publication validation only; no changes to server driver, model or services",
+  "aggregate_patch_exact_reconstruction": true,
+  "aggregate_patch_fuzz": 0,
+  "build_script_bash_syntax": "passed"
+}

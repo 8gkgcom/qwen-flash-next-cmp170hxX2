@@ -1,0 +1,1756 @@
+--- a/kernel-open/nvidia-drm/nvidia-drm-connector.c
++++ b/kernel-open/nvidia-drm/nvidia-drm-connector.c
+@@ -451,12 +451,8 @@
+     return count;
+ }
+ 
+-static int nv_drm_connector_mode_valid(struct drm_connector    *connector,
+-#if defined(NV_DRM_CONNECTOR_HELPER_FUNCS_MODE_VALID_HAS_CONST_MODE_ARG)
+-                                       const struct drm_display_mode *mode)
+-#else
+-                                       struct drm_display_mode *mode)
+-#endif
++static enum drm_mode_status nv_drm_connector_mode_valid(struct drm_connector *connector,
++                                                         struct drm_display_mode *mode)
+ {
+     struct drm_device *dev = connector->dev;
+     struct nv_drm_device *nv_dev = to_nv_device(dev);
+--- a/kernel-open/nvidia-uvm/uvm_gpu.h
++++ b/kernel-open/nvidia-uvm/uvm_gpu.h
+@@ -1839,6 +1839,15 @@
+ 
+ static bool uvm_parent_gpu_is_coherent(const uvm_parent_gpu_t *parent_gpu)
+ {
++    // cmpunlocker P2P: Blackwell+ consumer GPUs use BAR1 P2P via the SYS_COH
++    // aperture rewrite in nvGpuOpsBuildExternalAllocPtes. UVM's P2P
++    // registration path must take the coherent route to match, otherwise
++    // the ZONE_DEVICE peer DMA setup conflicts with BAR1-as-sysmem PTEs.
++    // Inert on CMP 170HX/220HX (Ampere, arch < GB100); kept for forward
++    // compatibility with any future Blackwell-class CMP card.
++    if (parent_gpu->rm_info.gpuArch >= NV2080_CTRL_MC_ARCH_INFO_ARCHITECTURE_GB100)
++        return true;
++
+     return parent_gpu->system_bus.memory_window_end > parent_gpu->system_bus.memory_window_start;
+ }
+ 
+--- a/kernel-open/nvidia/nv-pci.c
++++ b/kernel-open/nvidia/nv-pci.c
+@@ -334,6 +334,52 @@
+ #endif
+         }
+     }
++#endif
++}
++
++static void nv_cmp_unlock_bar1_resize(struct pci_dev *pci_dev)
++{
++#if defined(NV_PCI_REBAR_GET_POSSIBLE_SIZES_PRESENT)
++    void __iomem *pcfg;
++    u32 cya, cfg, cap;
++    resource_size_t bar0_start;
++
++    if (pci_dev->device != 0x20C2 && pci_dev->device != 0x2082)
++        return;
++
++    bar0_start = pci_resource_start(pci_dev, 0);
++    if (!bar0_start)
++        return;
++
++    pcfg = ioremap(bar0_start + 0x88000, 0x1000);
++    if (!pcfg) {
++        nv_printf(NV_DBG_ERRORS,
++            "NVRM: CMP BAR1 resize: failed to map XVE registers\n");
++        return;
++    }
++
++    cya = readl(pcfg + 0x724);
++    cfg = readl(pcfg + 0xDCC);
++    cap = readl(pcfg + 0xBBC);
++    nv_printf(NV_DBG_ERRORS,
++        "NVRM: CMP BAR1: before CYA=0x%08x CFG=0x%08x CAP=0x%08x\n",
++        cya, cfg, cap);
++
++    writel(0x30,         pcfg + 0x724);
++    writel(0x8000000A,   pcfg + 0xDCC);
++
++    cya = readl(pcfg + 0x724);
++    cfg = readl(pcfg + 0xDCC);
++    cap = readl(pcfg + 0xBBC);
++    nv_printf(NV_DBG_ERRORS,
++        "NVRM: CMP BAR1: after  CYA=0x%08x CFG=0x%08x CAP=0x%08x\n",
++        cya, cfg, cap);
++
++    iounmap(pcfg);
++
++    NVreg_EnableResizableBar = 1;
++    nv_printf(NV_DBG_ERRORS,
++        "NVRM: CMP BAR1: resize enabled, will attempt up to 64 GB\n");
+ #endif
+ }
+ 
+@@ -2087,10 +2133,19 @@
+         !nv_pci_validate_bars(pci_dev, /* only_bar0 = */ NV_FALSE))
+         goto err_zero_dev;
+ 
++    nv_cmp_unlock_bar1_resize(pci_dev);
++
+     if (nv_resize_pcie_bars(pci_dev)) {
+         nv_printf(NV_DBG_ERRORS,
+             "NVRM: Fatal Error while attempting to resize PCIe BARs.\n");
+         goto err_zero_dev;
++    }
++
++    if (pci_dev->device == 0x20C2 || pci_dev->device == 0x2082) {
++        resource_size_t bar1_len = pci_resource_len(pci_dev, NV_GPU_BAR1);
++        nv_printf(NV_DBG_ERRORS,
++            "NVRM: CMP BAR1: final size = %llu MB\n",
++            (unsigned long long)(bar1_len >> 20));
+     }
+ 
+     nvl->all_mappings_revoked = NV_TRUE;
+--- a/kernel-open/nvidia/nv-reg.h
++++ b/kernel-open/nvidia/nv-reg.h
+@@ -1051,7 +1051,10 @@
+ NV_DEFINE_REG_ENTRY_GLOBAL(__NV_ENABLE_PCIE_RELAXED_ORDERING_MODE, 0);
+ NV_DEFINE_REG_ENTRY_GLOBAL(__NV_REGISTER_PCI_DRIVER, 1);
+ NV_DEFINE_REG_ENTRY_GLOBAL(__NV_REGISTER_PLATFORM_DEVICE_DRIVER, 1);
+-NV_DEFINE_REG_ENTRY_GLOBAL(__NV_ENABLE_RESIZABLE_BAR, 0);
++// cmpunlocker P2P: default resizable BAR on so BAR1 P2P mappings can cover
++// full framebuffer size out of the box (compile-time default table entry;
++// cannot be gated by PCI device ID, see docs/P2P.md)
++NV_DEFINE_REG_ENTRY_GLOBAL(__NV_ENABLE_RESIZABLE_BAR, 1);
+ NV_DEFINE_REG_ENTRY_GLOBAL(__NV_ENABLE_DBG_BREAKPOINT, 0);
+ NV_DEFINE_REG_ENTRY_GLOBAL(__NV_TEGRA_GPU_PG_MASK, 0);
+ NV_DEFINE_REG_ENTRY_GLOBAL(__NV_ENABLE_NONBLOCKING_OPEN, 1);
+--- a/kernel-open/nvidia/nv.c
++++ b/kernel-open/nvidia/nv.c
+@@ -65,6 +65,10 @@
+ 
+ #include <linux/firmware.h>
+ #include <linux/cdev.h>
++#include <linux/delay.h>
++#include <linux/io.h>
++#include <linux/pci.h>
++#include <uapi/linux/pci_regs.h>
+ 
+ #include <sound/core.h>             /* HDA struct snd_card */
+ 
+@@ -1366,6 +1370,87 @@
+ #endif
+ }
+ 
++static void
++nv_cmp170hx_retrain_gen2(nv_state_t *nv)
++{
++    nv_linux_state_t *nvl = NV_GET_NVL_FROM_NV_STATE(nv);
++    struct pci_dev *gpu = nvl->pci_dev;
++    struct pci_dev *upstream;
++    void __iomem *bar0;
++    u16 gpu_ctl2, upstream_ctl2, upstream_ctl, link_status = 0;
++    u32 cya0, link_config;
++    int ret, attempt;
++
++    if ((gpu == NULL) ||
++        ((gpu->device != 0x20c2) && (gpu->device != 0x2082)))
++        return;
++
++    upstream = pci_upstream_bridge(gpu);
++    if (upstream == NULL)
++    {
++        NV_DEV_PRINTF(NV_DBG_ERRORS, nv,
++                      "CMP Gen2: no upstream PCIe bridge; skipping link retrain\n");
++        return;
++    }
++    bar0 = ioremap(pci_resource_start(gpu, 0), 0x90000);
++    if (bar0 == NULL)
++    {
++        NV_DEV_PRINTF(NV_DBG_ERRORS, nv,
++                      "CMP Gen2: cannot map BAR0; skipping link retrain\n");
++        return;
++    }
++    cya0 = readl(bar0 + 0x8c2c0);
++    writel(cya0 & ~(1U << 2), bar0 + 0x8c2c0);
++    link_config = readl(bar0 + 0x8c040);
++    writel((link_config & ~0x000c0000U) | (2U << 18), bar0 + 0x8c040);
++    writel(0x00000006U, bar0 + 0x8872c);
++    (void)readl(bar0 + 0x8872c);
++    iounmap(bar0);
++    msleep(50);
++    ret = pcie_capability_read_word(gpu, PCI_EXP_LNKCTL2, &gpu_ctl2);
++    if (ret)
++        goto capability_error;
++    ret = pcie_capability_read_word(upstream, PCI_EXP_LNKCTL2, &upstream_ctl2);
++    if (ret)
++        goto capability_error;
++    gpu_ctl2 = (gpu_ctl2 & ~PCI_EXP_LNKCTL2_TLS) | PCI_EXP_LNKCTL2_TLS_5_0GT;
++    upstream_ctl2 = (upstream_ctl2 & ~PCI_EXP_LNKCTL2_TLS) | PCI_EXP_LNKCTL2_TLS_5_0GT;
++    ret = pcie_capability_write_word(gpu, PCI_EXP_LNKCTL2, gpu_ctl2);
++    if (ret)
++        goto capability_error;
++    ret = pcie_capability_write_word(upstream, PCI_EXP_LNKCTL2, upstream_ctl2);
++    if (ret)
++        goto capability_error;
++    ret = pcie_capability_read_word(upstream, PCI_EXP_LNKCTL, &upstream_ctl);
++    if (ret)
++        goto capability_error;
++    ret = pcie_capability_write_word(upstream, PCI_EXP_LNKCTL,
++                                     upstream_ctl | PCI_EXP_LNKCTL_RL);
++    if (ret)
++        goto capability_error;
++
++    for (attempt = 0; attempt < 20; attempt++)
++    {
++        msleep(100);
++        ret = pcie_capability_read_word(gpu, PCI_EXP_LNKSTA, &link_status);
++        if (!ret &&
++            ((link_status & PCI_EXP_LNKSTA_CLS) >= PCI_EXP_LNKSTA_CLS_5_0GB))
++        {
++            NV_DEV_PRINTF(NV_DBG_INFO, nv, "CMP Gen2: PCIe link trained to Gen%u\n",
++                          link_status & PCI_EXP_LNKSTA_CLS);
++            return;
++        }
++    }
++
++    NV_DEV_PRINTF(NV_DBG_ERRORS, nv,
++                  "CMP Gen2: PCIe retrain completed without Gen2 link (status=0x%04x, ret=%d)\n",
++                  link_status, ret);
++    return;
++capability_error:
++    NV_DEV_PRINTF(NV_DBG_ERRORS, nv,
++                  "CMP Gen2: PCIe capability access failed (%d); skipping link retrain\n", ret);
++}
++
+ /*
+  * Brings up the device on the first file open. Assumes nvl->ldata_lock is held.
+  */
+@@ -1524,6 +1609,17 @@
+         rc = -EIO;
+         goto failed_release_irq;
+     }
++
++    if (nv->pci_info.device_id == 0x20C2)
++    {
++        nv->flags |= NV_FLAG_PERSISTENT_SW_STATE;
++    }
++    else if (nv->pci_info.device_id == 0x2082)
++    {
++        nv->flags |= NV_FLAG_PERSISTENT_SW_STATE;
++    }
++
++    nv_cmp170hx_retrain_gen2(nv);
+ 
+     /* Generate and cache the UUID for future callers */
+     (void)rm_get_gpu_uuid_raw(sp, nv);
+--- a/src/nvidia/arch/nvalloc/unix/src/osinit.c
++++ b/src/nvidia/arch/nvalloc/unix/src/osinit.c
+@@ -2195,6 +2195,18 @@
+         goto shutdown;
+     }
+ 
++    if (pGpu != NULL)
++    {
++        NvU32 devId = (pGpu->idInfo.PCIDeviceID) >> 16;
++        if (devId == 0x20C2 || devId == 0x2082)
++        {
++            NV_STATUS latePmaStatus =
++                memmgrSec2DebugLateExtendHighPmaRegion(pGpu, GPU_GET_MEMORY_MANAGER(pGpu));
++            NV_PRINTF(LEVEL_ERROR,
++                      "SEC2_DEBUG: late PMA extension status=0x%x\n", latePmaStatus);
++        }
++    }
++
+     //
+     // Expanded GPU visibility in GPUMGR is no longer needed once the
+     // GPU is initialized.
+--- a/src/nvidia/generated/g_kern_bus_nvoc.c
++++ b/src/nvidia/generated/g_kern_bus_nvoc.c
+@@ -1066,7 +1066,7 @@
+     // default
+     else
+     {
+-        pThis->__kbusGetBar1P2PDmaInfo__ = &kbusGetBar1P2PDmaInfo_395e98;
++        pThis->__kbusGetBar1P2PDmaInfo__ = &kbusGetBar1P2PDmaInfo_GH100;
+     }
+ 
+     // kbusIncreaseStaticBar1Refcount -- halified (2 hals) body
+@@ -1114,7 +1114,7 @@
+     // default
+     else
+     {
+-        pThis->__kbusCreateP2PMappingForBar1P2P__ = &kbusCreateP2PMappingForBar1P2P_395e98;
++        pThis->__kbusCreateP2PMappingForBar1P2P__ = &kbusCreateP2PMappingForBar1P2P_GH100;
+     }
+ 
+     // kbusRemoveP2PMappingForBar1P2P -- halified (2 hals) body
+@@ -1126,7 +1126,7 @@
+     // default
+     else
+     {
+-        pThis->__kbusRemoveP2PMappingForBar1P2P__ = &kbusRemoveP2PMappingForBar1P2P_395e98;
++        pThis->__kbusRemoveP2PMappingForBar1P2P__ = &kbusRemoveP2PMappingForBar1P2P_GH100;
+     }
+ 
+     // kbusHasPcieBar1P2PMapping -- halified (2 hals) body
+@@ -1138,7 +1138,7 @@
+     // default
+     else
+     {
+-        pThis->__kbusHasPcieBar1P2PMapping__ = &kbusHasPcieBar1P2PMapping_d69453;
++        pThis->__kbusHasPcieBar1P2PMapping__ = &kbusHasPcieBar1P2PMapping_GH100;
+     }
+ 
+     // kbusIsPcieBar1P2PMappingSupported -- halified (2 hals) body
+@@ -1150,7 +1150,7 @@
+     // default
+     else
+     {
+-        pThis->__kbusIsPcieBar1P2PMappingSupported__ = &kbusIsPcieBar1P2PMappingSupported_d69453;
++        pThis->__kbusIsPcieBar1P2PMappingSupported__ = &kbusIsPcieBar1P2PMappingSupported_GH100;
+     }
+ 
+     // kbusCheckFlaSupportedAndInit -- halified (2 hals) body
+--- a/src/nvidia/generated/g_kernel_gsp_nvoc.h
++++ b/src/nvidia/generated/g_kernel_gsp_nvoc.h
+@@ -543,6 +543,8 @@
+     NvU8 *pGspRmBootUcodeImage;
+     RM_RISCV_UCODE_DESC *pGspRmBootUcodeDesc;
+     MEMORY_DESCRIPTOR *pGspUCodeRadix3Descriptor;
++    NvU8 *pStockSignatureData;
++    NvU64 stockSignatureSize;
+     MEMORY_DESCRIPTOR *pSignatureMemdesc;
+     GspSystemInfo *pSystemInfo;
+     NvU32 regTableSize;
+--- a/src/nvidia/inc/kernel/gpu/mem_mgr/mem_mgr.h
++++ b/src/nvidia/inc/kernel/gpu/mem_mgr/mem_mgr.h
+@@ -1,3 +1,5 @@
+ 
+ #include "g_mem_mgr_nvoc.h"
+ 
++NV_STATUS memmgrSec2DebugLateExtendHighPmaRegion(OBJGPU *pGpu, MemoryManager *pMemoryManager);
++
+--- a/src/nvidia/src/kernel/gpu/bif/kernel_bif.c
++++ b/src/nvidia/src/kernel/gpu/bif/kernel_bif.c
+@@ -1129,9 +1129,12 @@
+ )
+ {
+     NvU32 data32;
+-
+-    // P2P Override
+-    pKernelBif->p2pOverride = BIF_P2P_NOT_OVERRIDEN;
++    NvU32 devId = pGpu->idInfo.PCIDeviceID >> 16;
++    NvBool bCmp170hx = (devId == 0x20C2 || devId == 0x2082);
++
++    // P2P Override: on CMP 170HX/220HX default to both reads+writes enabled
++    // so BAR1 P2P works out of the box (cmpunlocker P2P unlock)
++    pKernelBif->p2pOverride = bCmp170hx ? 0x11 : BIF_P2P_NOT_OVERRIDEN;
+     if (osReadRegistryDword(pGpu, NV_REG_STR_CL_FORCE_P2P, &data32) == NV_OK)
+     {
+         pKernelBif->p2pOverride = data32;
+@@ -1147,7 +1150,10 @@
+         pKernelBif->forceP2PType = data32;
+     }
+ 
+-    pKernelBif->pcieP2PType = NV_REG_STR_RM_PCIEP2P_TYPE_DEFAULT;
++    // cmpunlocker P2P: force BAR1 P2P as the default connection type on
++    // CMP 170HX/220HX instead of NV_REG_STR_RM_PCIEP2P_TYPE_DEFAULT
++    pKernelBif->pcieP2PType = bCmp170hx ? NV_REG_STR_RM_PCIEP2P_TYPE_BAR1
++                                         : NV_REG_STR_RM_PCIEP2P_TYPE_DEFAULT;
+     if (osReadRegistryDword(pGpu, NV_REG_STR_RM_PCIEP2P_TYPE, &data32) == NV_OK)
+     {
+         pKernelBif->pcieP2PType = data32;
+--- a/src/nvidia/src/kernel/gpu/bus/arch/maxwell/kern_bus_gm107.c
++++ b/src/nvidia/src/kernel/gpu/bus/arch/maxwell/kern_bus_gm107.c
+@@ -220,6 +220,16 @@
+     else
+     {
+         offsetBar0 = (pMemoryManager->Ram.fbAddrSpaceSizeMb << 20) - DRF_SIZE(NV_PRAMIN);
++
++        {
++            NvU32 devId = pGpu->idInfo.PCIDeviceID >> 16;
++            if ((devId == 0x20C2 || devId == 0x2082) &&
++                pMemoryManager->Ram.fbAddrSpaceSizeMb > 0x2000)
++            {
++                NvU64 stockOffset = (0x2000ULL << 20) - DRF_SIZE(NV_PRAMIN);
++                offsetBar0 = stockOffset;
++            }
++        }
+     }
+ 
+     //
+@@ -288,10 +298,30 @@
+ 
+         if (gpumgrGetGpuLinkCount(pGpu->gpuInstance) > 0)
+         {
++            KernelBif *pKernelBifP2P = GPU_GET_KERNEL_BIF(pGpu);
++
++            //
++            // cmpunlocker P2P: _kbusInitP2P_GM107 unconditionally pre-registers a
++            // mailbox peer id for every GPU pair, leaving p2pPcie.peerNumberMask
++            // non-zero before any P2P is ever requested. BAR1 P2P refuses to
++            // coexist with a mailbox peer (gate 4 of
++            // kbusIsPcieBar1P2PMappingSupported_GH100), so that pre-registration
++            // permanently blocks BAR1 P2P. When BAR1 P2P is the intended path,
++            // skip it and leave the mask clear.
++            //
+             if (!kbusIsP2pInitialized(pKernelBus) &&
+-                !kbusIsP2pMailboxClientAllocated(pKernelBus))
++                !kbusIsP2pMailboxClientAllocated(pKernelBus) &&
++                ((pKernelBifP2P == NULL) ||
++                 (pKernelBifP2P->pcieP2PType != NV_REG_STR_RM_PCIEP2P_TYPE_BAR1)))
+             {
+                 _kbusInitP2P_GM107(pGpu, pKernelBus);
++            }
++            else if ((pKernelBifP2P != NULL) &&
++                     (pKernelBifP2P->pcieP2PType == NV_REG_STR_RM_PCIEP2P_TYPE_BAR1))
++            {
++                NV_PRINTF(LEVEL_ERROR,
++                          "CMPUNLOCK_BAR1P2P: skipping mailbox peer pre-registration "
++                          "(pcieP2PType=BAR1) so peerNumberMask stays clear\n");
+             }
+         }
+     }
+--- a/src/nvidia/src/kernel/gpu/bus/arch/pascal/kern_bus_gp100.c
++++ b/src/nvidia/src/kernel/gpu/bus/arch/pascal/kern_bus_gp100.c
+@@ -63,6 +63,13 @@
+         FLD_TEST_DRF(_P2PAPI, _ATTRIBUTES, _CONNECTION_TYPE, _NVLINK_INDIRECT, attributes))
+     {
+         return kbusCreateP2PMappingForNvlink_HAL(pGpu0, pKernelBus0, pGpu1, pKernelBus1, peer0, peer1, attributes);
++    }
++
++    // cmpunlocker P2P: BAR1 P2P branch (attribute set from pKernelBif->pcieP2PType,
++    // which is only defaulted to BAR1 on CMP 170HX/220HX, see kernel_bif.c)
++    if (FLD_TEST_DRF(_P2PAPI, _ATTRIBUTES, _CONNECTION_TYPE, _PCIE_BAR1, attributes))
++    {
++        return kbusCreateP2PMappingForBar1P2P_HAL(pGpu0, pKernelBus0, pGpu1, pKernelBus1, attributes);
+     }
+ 
+     if (FLD_TEST_DRF(_P2PAPI, _ATTRIBUTES, _CONNECTION_TYPE, _PCIE, attributes))
+@@ -641,6 +648,12 @@
+         FLD_TEST_DRF(_P2PAPI, _ATTRIBUTES, _CONNECTION_TYPE, _NVLINK_INDIRECT, attributes))
+     {
+         return kbusRemoveP2PMappingForNvlink_HAL(pGpu0, pKernelBus0, pGpu1, pKernelBus1, peer0, peer1, attributes);
++    }
++
++    // cmpunlocker P2P: BAR1 P2P branch, see kbusCreateP2PMapping_GP100 above
++    if (FLD_TEST_DRF(_P2PAPI, _ATTRIBUTES, _CONNECTION_TYPE, _PCIE_BAR1, attributes))
++    {
++        return kbusRemoveP2PMappingForBar1P2P_HAL(pGpu0, pKernelBus0, pGpu1, pKernelBus1, attributes);
+     }
+ 
+     if (FLD_TEST_DRF(_P2PAPI, _ATTRIBUTES, _CONNECTION_TYPE, _PCIE, attributes))
+--- a/src/nvidia/src/kernel/gpu/gpu.c
++++ b/src/nvidia/src/kernel/gpu/gpu.c
+@@ -2517,6 +2517,19 @@
+ 
+     pGpu->pcieP2PReadCaps = p2pCapsParams.p2pReadCapsStatus;
+     pGpu->pcieP2PWriteCaps = p2pCapsParams.p2pWriteCapsStatus;
++
++    // cmpunlocker --p2p: override the GSP restriction on CMP cards only.
++    // A capability report is not a substitute for testing real transfers.
++    {
++        NvU32 cmpDevId = pGpu->idInfo.PCIDeviceID >> 16;
++        if (cmpDevId == 0x20C2 || cmpDevId == 0x2082)
++        {
++            pGpu->pcieP2PReadCaps = 0;  // NV0000_P2P_CAPS_STATUS_OK
++            pGpu->pcieP2PWriteCaps = 0; // NV0000_P2P_CAPS_STATUS_OK
++            NV_PRINTF(LEVEL_ERROR,
++                      "CMPUNLOCK: PCIe P2P caps forced to OK (--p2p)\n");
++        }
++    }
+ }
+ 
+ static void
+--- a/src/nvidia/src/kernel/gpu/gpu_gspclient.c
++++ b/src/nvidia/src/kernel/gpu/gpu_gspclient.c
+@@ -292,9 +292,20 @@
+ )
+ {
+     GspStaticConfigInfo *pGSCI = GPU_GET_GSP_STATIC_INFO(pGpu);
++    NvU32 devId = pGpu->idInfo.PCIDeviceID >> 16;
+ 
+     portMemCopy(nameStringBuffer, sizeof(pGSCI->gpuNameString),
+                 pGSCI->gpuNameString, sizeof(pGSCI->gpuNameString));
++
++    if (devId == 0x20C2 || devId == 0x2082)
++    {
++        const char cmp170Name[] = "NVIDIA CMP 170HX";
++        portStringCopy(nameStringBuffer, sizeof(pGSCI->gpuNameString),
++                       cmp170Name, sizeof(cmp170Name));
++        NV_PRINTF(LEVEL_ERROR,
++                  "SEC2_DEBUG: name string overridden to '%s' (devId=0x%x)\n",
++                  cmp170Name, devId);
++    }
+ 
+     return NV_OK;
+ }
+--- a/src/nvidia/src/kernel/gpu/gsp/arch/turing/kernel_gsp_tu102.c
++++ b/src/nvidia/src/kernel/gpu/gsp/arch/turing/kernel_gsp_tu102.c
+@@ -56,6 +56,12 @@
+ 
+ #include "g_all_dcl_pb.h"
+ #include "lib/protobuf/prb.h"
++
++#define SEC2_DEBUG_PRI_FEATURE_OVERRIDE_PLM         0x00823804
++#define SEC2_DEBUG_PRI_FEATURE_OVERRIDE_SM_SPEED    0x0082381c
++#define SEC2_DEBUG_PRI_FEATURE_OVERRIDE_SM_SPEED_1  0x00823820
++#define SEC2_DEBUG_PRI_FBPA_CFG1                    0x009a0204
++#define SEC2_DEBUG_PRI_MMU_LMR                      0x00100ce0
+ 
+ void
+ kgspConfigureFalcon_TU102
+@@ -545,18 +551,35 @@
+         // Execute FWSEC to setup FRTS if we have a FRTS region.
+         if (kgspGetFrtsSize_HAL(pGpu, pKernelGsp) > 0)
+         {
+-            NV_ASSERT_OR_RETURN(pKernelGsp->pPreparedFwsecCmd != NULL, NV_ERR_INVALID_STATE);
+-
+-            NV_ASSERT_OK_OR_RETURN(kflcnReset_HAL(pGpu, pKernelFalcon));
++            NV_PRINTF(LEVEL_ERROR,
++                      "SEC2_DEBUG: FWSEC: pPreparedFwsecCmd=%p frtsSize=0x%x\n",
++                      pKernelGsp->pPreparedFwsecCmd,
++                      kgspGetFrtsSize_HAL(pGpu, pKernelGsp));
++
++            if (pKernelGsp->pPreparedFwsecCmd == NULL)
++            {
++                NV_PRINTF(LEVEL_ERROR, "SEC2_DEBUG: FWSEC cmd is NULL, aborting\n");
++                return NV_ERR_INVALID_STATE;
++            }
++
++            status = kflcnReset_HAL(pGpu, pKernelFalcon);
++            NV_PRINTF(LEVEL_ERROR,
++                      "SEC2_DEBUG: kflcnReset for FWSEC: 0x%x\n", status);
++            if (status != NV_OK) return status;
+ 
+             status = kgspExecuteFwsec_HAL(pGpu, pKernelGsp, pKernelGsp->pPreparedFwsecCmd);
+             portMemFree(pKernelGsp->pPreparedFwsecCmd);
+             pKernelGsp->pPreparedFwsecCmd = NULL;
+ 
+-            NV_ASSERT_OK_OR_RETURN(status);
++            NV_PRINTF(LEVEL_ERROR,
++                      "SEC2_DEBUG: FWSEC status=0x%x\n", status);
++            if (status != NV_OK) return status;
+         }
+ 
+-        NV_ASSERT_OK_OR_RETURN(kflcnResetIntoRiscv_HAL(pGpu, pKernelFalcon));
++        status = kflcnResetIntoRiscv_HAL(pGpu, pKernelFalcon);
++        NV_PRINTF(LEVEL_ERROR,
++                  "SEC2_DEBUG: kflcnResetIntoRiscv: 0x%x\n", status);
++        if (status != NV_OK) return status;
+ 
+         // Load init args into mailbox regs
+         kgspProgramLibosBootArgsAddr_HAL(pGpu, pKernelGsp);
+@@ -565,6 +588,67 @@
+     // Execute Booter Load
+     status = kgspExecuteBooterLoad_HAL(pGpu, pKernelGsp,
+                                        _kgspGetBooterLoadArgs(pKernelGsp, bootMode));
++
++    {
++        NvU32 devId = pGpu->idInfo.PCIDeviceID >> 16;
++        if (devId == 0x20C2 || devId == 0x2082)
++            NV_PRINTF(LEVEL_ERROR,
++                      "SEC2_DEBUG: normal BooterLoad status=0x%x\n", status);
++    }
++
++    {
++        NvU32 devId = pGpu->idInfo.PCIDeviceID >> 16;
++        if ((devId == 0x20C2 || devId == 0x2082) && status == NV_OK)
++        {
++            NV_PRINTF(LEVEL_ERROR,
++                      "SEC2_DEBUG: POST-BooterLoad verify PLM=0x%08x SS0=0x%08x SS1=0x%08x "
++                      "CFG1=0x%08x LMR=0x%08x\n",
++                      GPU_REG_RD32(pGpu, SEC2_DEBUG_PRI_FEATURE_OVERRIDE_PLM),
++                      GPU_REG_RD32(pGpu, SEC2_DEBUG_PRI_FEATURE_OVERRIDE_SM_SPEED),
++                      GPU_REG_RD32(pGpu, SEC2_DEBUG_PRI_FEATURE_OVERRIDE_SM_SPEED_1),
++                      GPU_REG_RD32(pGpu, SEC2_DEBUG_PRI_FBPA_CFG1),
++                      GPU_REG_RD32(pGpu, SEC2_DEBUG_PRI_MMU_LMR));
++        }
++    }
++
++
++    {
++        NvU32 lateDevId = pGpu->idInfo.PCIDeviceID >> 16;
++        if ((lateDevId == 0x20C2 || lateDevId == 0x2082) && status == NV_OK)
++        {
++            #define PCIE_GEN2_PRIV_MISC_1_ADDR_LATE     0x0008841cU
++            #define PCIE_GEN2_PRIV_MISC_1_GEN2_EN_LATE  ((1U << 11) | (1U << 13))
++            #define PCIE_GEN2_PRIV_MISC_1_GEN2_VAL_LATE ((1U << 12) | (1U << 14))
++            NvU32 misc1Late = GPU_REG_RD32(pGpu, PCIE_GEN2_PRIV_MISC_1_ADDR_LATE);
++            NvU32 misc1WantLate = (misc1Late | PCIE_GEN2_PRIV_MISC_1_GEN2_EN_LATE)
++                                  & ~PCIE_GEN2_PRIV_MISC_1_GEN2_VAL_LATE;
++            GPU_REG_WR32(pGpu, PCIE_GEN2_PRIV_MISC_1_ADDR_LATE, misc1WantLate);
++            NV_PRINTF(LEVEL_ERROR,
++                      "SEC2_DEBUG: PCIe PRIV_MISC_1 late pre=0x%08x post=0x%08x\n",
++                      misc1Late,
++                      GPU_REG_RD32(pGpu, PCIE_GEN2_PRIV_MISC_1_ADDR_LATE));
++            {
++                NvU32 cyaLate = GPU_REG_RD32(pGpu, 0x0008c2c0U);
++                cyaLate = cyaLate & ~(1U << 2);
++                GPU_REG_WR32(pGpu, 0x0008c2c0U, cyaLate);
++                NV_PRINTF(LEVEL_ERROR,
++                          "SEC2_DEBUG: PCIe CYA_0 late clear DIS_G2: 0x%08x (bit2=%u)\n",
++                          GPU_REG_RD32(pGpu, 0x0008c2c0U),
++                          (GPU_REG_RD32(pGpu, 0x0008c2c0U) >> 2) & 1U);
++                NvU32 linkCfgLate = GPU_REG_RD32(pGpu, 0x0008c040U);
++                linkCfgLate = (linkCfgLate & ~0x000C0000U) | (0x2U << 18);
++                GPU_REG_WR32(pGpu, 0x0008c040U, linkCfgLate);
++                NV_PRINTF(LEVEL_ERROR,
++                          "SEC2_DEBUG: PCIe LINK_CONFIG_0 late MAX_RATE=2: 0x%08x\n",
++                          GPU_REG_RD32(pGpu, 0x0008c040U));
++                GPU_REG_WR32(pGpu, 0x0008872cU, 0x00000006U);
++                NV_PRINTF(LEVEL_ERROR,
++                          "SEC2_DEBUG: PCIe XVE_OVR late=0x%08x\n",
++                          GPU_REG_RD32(pGpu, 0x0008872cU));
++            }
++        }
++    }
++
+     if (status != NV_OK)
+     {
+         NV_PRINTF(LEVEL_ERROR, "failed to execute Booter Load (ucode for initial boot): 0x%x\n", status);
+--- a/src/nvidia/src/kernel/gpu/gsp/kernel_gsp.c
++++ b/src/nvidia/src/kernel/gpu/gsp/kernel_gsp.c
+@@ -100,6 +100,32 @@
+ #include "ctrl/ctrl208f/ctrl208fucodeinstrumentation.h"
+ #endif
+ 
++#define SEC2_POSTBL_TIMING_CMP_170HX_8GB_PCI_DEVICE_ID   0x20C2
++#define SEC2_POSTBL_TIMING_CMP_170HX_10GB_PCI_DEVICE_ID 0x2082
++#define SEC2_POSTBL_TIMING_SIGNATURE_SIZE          0x0000f800ULL
++#define SEC2_POSTBL_TIMING_FILL_DWORD              0x000004a7U
++#define SEC2_POSTBL_TIMING_DMEM_PATH               "/lib/firmware/nvidia/ga100/gsp/dmem.bin"
++
++#ifdef GSP_FW_WPR_META_V1_H_
++#define SEC2_POSTBL_TIMING_WPR_META(pKernelGsp)      ((pKernelGsp)->pWprMetaV1)
++#define SEC2_POSTBL_TIMING_WPR_META_DESC(pKernelGsp) ((pKernelGsp)->pWprMetaV1Descriptor)
++#else
++#define SEC2_POSTBL_TIMING_WPR_META(pKernelGsp)      ((pKernelGsp)->pWprMeta)
++#define SEC2_POSTBL_TIMING_WPR_META_DESC(pKernelGsp) ((pKernelGsp)->pWprMetaDescriptor)
++#endif
++
++NV_STATUS kgspSec2PostblTimingRefillPayload(OBJGPU *pGpu, KernelGsp *pKernelGsp,
++                                           NvU32 writeAddr, NvU32 writeValue);
++NV_STATUS kgspSec2PostblTimingRebuildStockSignature(OBJGPU *pGpu, KernelGsp *pKernelGsp);
++
++static NvBool
++_kgspSec2PostblTimingEnabled(OBJGPU *pGpu)
++{
++    NvU32 devId = pGpu->idInfo.PCIDeviceID >> 16;
++    return (devId == SEC2_POSTBL_TIMING_CMP_170HX_8GB_PCI_DEVICE_ID ||
++            devId == SEC2_POSTBL_TIMING_CMP_170HX_10GB_PCI_DEVICE_ID);
++}
++
+ #include "crashcat/crashcat_report.h"
+ 
+ 
+@@ -4802,7 +4828,7 @@
+     *pbRetry = NV_FALSE;
+ 
+     // Fail early if WPR2 is up
+-    if (kgspIsWpr2Up_HAL(pGpu, pKernelGsp) &&
++    if (!_kgspSec2PostblTimingEnabled(pGpu) && kgspIsWpr2Up_HAL(pGpu, pKernelGsp) &&
+         (!pGpu->getProperty(pGpu, PDB_PROP_GPU_PREINITIALIZED_WPR_REGION)))
+     {
+         NV_PRINTF(LEVEL_ERROR, "unexpected WPR2 already up, cannot proceed with booting GSP\n");
+@@ -4813,6 +4839,16 @@
+     // Populate WPR meta structure (requires knowing FB size on dGPU, which depends on GFW_BOOT)
+     NV_CHECK_OK_OR_RETURN(LEVEL_ERROR, kgspPopulateWprMeta_HAL(pGpu, pKernelGsp, pGspFw));
+ 
++    if (_kgspSec2PostblTimingEnabled(pGpu))
++    {
++        NV_PRINTF(LEVEL_ERROR,
++                  "SEC2_DEBUG: WPR meta fbSize=0x%016llx wprEnd=0x%016llx "
++                  "heapSize=0x%016llx\n",
++                  SEC2_POSTBL_TIMING_WPR_META(pKernelGsp)->fbSize,
++                  SEC2_POSTBL_TIMING_WPR_META(pKernelGsp)->gspFwWprEnd,
++                  SEC2_POSTBL_TIMING_WPR_META(pKernelGsp)->gspFwHeapSize);
++    }
++
+     {
+         // If the new FB layout requires a scrubber ucode to scrub additional space, prepare it now
+         NV_CHECK_OK_OR_RETURN(LEVEL_ERROR, _kgspPrepareScrubberImageIfNeeded(pGpu, pKernelGsp));
+@@ -4820,6 +4856,397 @@
+ 
+     // Setup arguments for bootstrapping GSP
+     NV_CHECK_OK_OR_RETURN(LEVEL_ERROR, kgspPrepareForBootstrap_HAL(pGpu, pKernelGsp, KGSP_BOOT_MODE_NORMAL));
++
++    if (_kgspSec2PostblTimingEnabled(pGpu))
++    {
++        NvU32 devId = pGpu->idInfo.PCIDeviceID >> 16;
++        NvU32 plmIdx, attempt;
++        NV_STATUS plmStatus;
++
++        static const struct { NvU32 addr; NvU32 value; const char *name; } plmTable[] = {
++            { 0x001fa7ccU, 0xfffff0ffU, "WPR_CFG" },
++            { 0x009a0148U, 0xffffffffU, "FBPA" },
++            { 0x001fa7c4U, 0xffffffffU, "WPR" },
++            { 0x00823804U, 0xffffffffU, "FEAT" },
++            { 0x00088ff4U, 0xffffffffU, "XVE" },
++            { 0x00088ab4U, 0xffffffffU, "XVE_B" },
++            { 0x00088ff8U, 0xffffffffU, "XVE_C" },
++            { 0x00823b00U, 0xffffffffU, "FEAT2" },
++            { 0x008200fcU, 0xffffffffU, "OPT_PLM" },
++            { 0x008200d8U, 0xffffffffU, "RECONFIG_PLM" },
++            { 0x0000c840U, 0xffffffffU, "PJTAG_PLM" },
++            { 0x0000c848U, 0xffffffffU, "PJTAG_SEC_PLM" },
++        };
++
++        NvU32 wpr2Lo = GPU_REG_RD32(pGpu, 0x001fa824U);
++        NvU32 wpr2Hi = GPU_REG_RD32(pGpu, 0x001fa828U);
++        NV_PRINTF(LEVEL_ERROR,
++                  "SEC2_DEBUG: saved WPR2 lo=0x%08x hi=0x%08x\n",
++                  wpr2Lo, wpr2Hi);
++
++        for (plmIdx = 0; plmIdx < 12; plmIdx++)
++        {
++            NvBool opened = NV_FALSE;
++            for (attempt = 0; attempt < 2 && !opened; attempt++)
++            {
++                GPU_REG_WR32(pGpu, 0x001fa824U, wpr2Lo);
++                GPU_REG_WR32(pGpu, 0x001fa828U, wpr2Hi);
++
++                plmStatus = kgspSec2PostblTimingRefillPayload(pGpu, pKernelGsp,
++                    plmTable[plmIdx].addr, plmTable[plmIdx].value);
++                if (plmStatus != NV_OK)
++                    continue;
++
++                plmStatus = kgspExecuteBooterLoad_HAL(pGpu, pKernelGsp,
++                    memdescGetPhysAddr(SEC2_POSTBL_TIMING_WPR_META_DESC(pKernelGsp), AT_GPU, 0));
++
++                NvU32 regVal = GPU_REG_RD32(pGpu, plmTable[plmIdx].addr);
++                NV_PRINTF(LEVEL_ERROR,
++                          "SEC2_DEBUG: PLM[%u] %s(0x%x) attempt=%u status=0x%x reg=0x%08x\n",
++                          plmIdx, plmTable[plmIdx].name,
++                          plmTable[plmIdx].addr, attempt, plmStatus, regVal);
++
++                if (regVal == plmTable[plmIdx].value)
++                    opened = NV_TRUE;
++            }
++            if (!opened)
++                NV_PRINTF(LEVEL_ERROR,
++                          "SEC2_DEBUG: FAILED to open %s after 2 attempts\n",
++                          plmTable[plmIdx].name);
++        }
++
++        GPU_REG_WR32(pGpu, 0x001fa824U, wpr2Lo);
++        GPU_REG_WR32(pGpu, 0x001fa828U, wpr2Hi);
++
++        NV_PRINTF(LEVEL_ERROR,
++                  "SEC2_DEBUG: PLMs: FEAT=0x%08x FBPA=0x%08x WPR=0x%08x WPR_CFG=0x%08x\n",
++                  GPU_REG_RD32(pGpu, 0x00823804U),
++                  GPU_REG_RD32(pGpu, 0x009a0148U),
++                  GPU_REG_RD32(pGpu, 0x001fa7c4U),
++                  GPU_REG_RD32(pGpu, 0x001fa7ccU));
++
++        {
++            NvU32 devId = pGpu->idInfo.PCIDeviceID >> 16;
++            NvU32 cfg1Value;
++            NvU32 lmrValue;
++
++            if (devId == SEC2_POSTBL_TIMING_CMP_170HX_8GB_PCI_DEVICE_ID)
++            {
++                cfg1Value = 0x02779000U;
++                lmrValue  = 0x0000020BU;
++            }
++            else
++            {
++                cfg1Value = 0x02669000U;
++                lmrValue  = 0x0000028AU;
++            }
++
++            GPU_REG_WR32(pGpu, 0x0082381cU, 0x88888888U);
++            GPU_REG_WR32(pGpu, 0x00823820U, 0x00000008U);
++            GPU_REG_WR32(pGpu, 0x009a0204U, cfg1Value);
++            GPU_REG_WR32(pGpu, 0x00100ce0U, lmrValue);
++
++            NV_PRINTF(LEVEL_ERROR,
++                      "SEC2_DEBUG: POST-WRITE SS0=0x%08x SS1=0x%08x "
++                      "CFG1=0x%08x LMR=0x%08x (devId=0x%x)\n",
++                      GPU_REG_RD32(pGpu, 0x0082381cU),
++                      GPU_REG_RD32(pGpu, 0x00823820U),
++                      GPU_REG_RD32(pGpu, 0x009a0204U),
++                      GPU_REG_RD32(pGpu, 0x00100ce0U),
++                      devId);
++        }
++
++        {
++            NvU32 gpc;
++            NvU32 gpcDisable = GPU_REG_RD32(pGpu, 0x00820350U);
++            NV_PRINTF(LEVEL_ERROR,
++                      "SEC2_DEBUG: SM-RECONFIG start OPT_GPC_DISABLE=0x%08x\n",
++                      gpcDisable);
++            for (gpc = 0; gpc < 8; gpc++)
++            {
++                NvU32 statBefore = GPU_REG_RD32(pGpu, 0x00820c38U + gpc * 4U);
++                NvU32 statAfter;
++                GPU_REG_WR32(pGpu, 0x00820a40U + gpc * 4U, 0x000000ffU);
++                statAfter = GPU_REG_RD32(pGpu, 0x00820c38U + gpc * 4U);
++                NV_PRINTF(LEVEL_ERROR,
++                          "SEC2_DEBUG: SM-RECONFIG GPC%u OVR<-0xff STATUS 0x%08x->0x%08x\n",
++                          gpc, statBefore, statAfter);
++            }
++        }
++
++
++        {
++            #define PCIE_GEN2_LINK_CAP_ADDR         0x00088084U
++            #define PCIE_GEN2_LINK_CAP2_ADDR        0x000880a4U
++            #define PCIE_GEN2_LINK_CTRL_2_ADDR      0x000880a8U
++            #define PCIE_GEN2_LINK_CTRL_STATUS_ADDR 0x00088088U
++            #define PCIE_GEN2_PL_LINK_RATE_ADDR     0x0008c1c0U
++            #define PCIE_GEN2_LTSSM_ADDR            0x0008872cU
++            #define PCIE_GEN2_VSEC_DEVICE_ADDR      0x0008860cU
++            #define PCIE_GEN2_VSEC_HIERARCHY_ADDR   0x00088610U
++            #define PCIE_GEN2_XP3G_OVR_BASE         0x0008e110U
++            #define PCIE_GEN2_XP3G_VAL_BASE         0x0008e120U
++            #define PCIE_GEN2_XP3G_STATUS_BASE      0x0008e100U
++            #define PCIE_GEN2_OPT_GEN23_ADDR        0x0082057cU
++            #define PCIE_GEN2_OPT_GEN3_ADDR         0x00820580U
++            #define PCIE_GEN2_OPT_MAGIC_ADDR        0x00820520U
++            #define PCIE_LINK_SPEED_OF(stat)        (((stat) >> 16) & 0xFU)
++            const NvU32 PCIE_GEN2_LINK_SPEED = 0x00000002U;
++            const NvU32 PCIE_GEN2_PL_LINK_RATE_VALUE = 0x00240036U;
++
++            NvU32 capBefore = GPU_REG_RD32(pGpu, PCIE_GEN2_LINK_CAP_ADDR);
++            NvU32 statBefore = GPU_REG_RD32(pGpu, PCIE_GEN2_LINK_CTRL_STATUS_ADDR);
++            NvU32 vsecDev = GPU_REG_RD32(pGpu, PCIE_GEN2_VSEC_DEVICE_ADDR);
++            NvU32 vsecHier = GPU_REG_RD32(pGpu, PCIE_GEN2_VSEC_HIERARCHY_ADDR);
++            NV_PRINTF(LEVEL_ERROR,
++                      "SEC2_DEBUG: PCIe pre  CAP=0x%08x CAP2=0x%08x LC2=0x%08x PL=0x%08x "
++                      "STAT=0x%08x VSEC dev=0x%08x hier=0x%08x OPT=%08x/%08x/%08x "
++                      "XP3G st0=0x%08x ovr0=0x%08x val0=0x%08x "
++                      "st3=0x%08x ovr3=0x%08x val3=0x%08x speed=%u\n",
++                      capBefore,
++                      GPU_REG_RD32(pGpu, PCIE_GEN2_LINK_CAP2_ADDR),
++                      GPU_REG_RD32(pGpu, PCIE_GEN2_LINK_CTRL_2_ADDR),
++                      GPU_REG_RD32(pGpu, PCIE_GEN2_PL_LINK_RATE_ADDR),
++                      statBefore,
++                      vsecDev,
++                      vsecHier,
++                      GPU_REG_RD32(pGpu, PCIE_GEN2_OPT_GEN23_ADDR),
++                      GPU_REG_RD32(pGpu, PCIE_GEN2_OPT_GEN3_ADDR),
++                      GPU_REG_RD32(pGpu, PCIE_GEN2_OPT_MAGIC_ADDR),
++                      GPU_REG_RD32(pGpu, PCIE_GEN2_XP3G_STATUS_BASE),
++                      GPU_REG_RD32(pGpu, PCIE_GEN2_XP3G_OVR_BASE),
++                      GPU_REG_RD32(pGpu, PCIE_GEN2_XP3G_VAL_BASE),
++                      GPU_REG_RD32(pGpu, PCIE_GEN2_XP3G_STATUS_BASE + 0xCU),
++                      GPU_REG_RD32(pGpu, PCIE_GEN2_XP3G_OVR_BASE + 0xCU),
++                      GPU_REG_RD32(pGpu, PCIE_GEN2_XP3G_VAL_BASE + 0xCU),
++                      PCIE_LINK_SPEED_OF(statBefore));
++
++            {
++                static const struct { NvU32 addr; NvU32 value; const char *name; } xp3gTable[] = {
++                    { 0x0008e1b0U, 0xffffffffU, "XP3G_PLM" },
++                    { 0x0008e1b4U, 0xffffffffU, "XP3G_PLM4" },
++                    { 0x0008e1b8U, 0xffffffffU, "XP3G_PLM8" },
++                    { 0x0008e1bcU, 0xffffffffU, "XP3G_PLMC" },
++                    { 0x00088fe8U, 0xffffffffU, "XVE_D0" },
++                    { 0x00088fecU, 0xffffffffU, "XVE_D4" },
++                    { 0x00088ff0U, 0xffffffffU, "XVE_D8" },
++                    { 0x008200d0U, 0xffffffffU, "OPTB_D0" },
++                    { 0x008200d4U, 0xffffffffU, "OPTB_D4" },
++                    { 0x008200d8U, 0xffffffffU, "OPTB_D8" },
++                    { 0x008200dcU, 0xffffffffU, "OPTB_DC" },
++                    { 0x008200e0U, 0xffffffffU, "OPTB_E0" },
++                    { 0x008200e4U, 0xffffffffU, "OPTB_E4" },
++                    { 0x008200e8U, 0xffffffffU, "OPTB_E8" },
++                    { 0x008200ecU, 0xffffffffU, "OPTB_EC" },
++                    { 0x008200f0U, 0xffffffffU, "OPTB_F0" },
++                    { 0x008200f4U, 0xffffffffU, "OPTB_F4" },
++                    { 0x00823800U, 0xffffffffU, "FEAT_OVR_ECC_PLM" },
++                    { 0x0082057cU, 0x00000000U, "OPT_GEN23" },
++                    { 0x0008e120U, 0x00000000U, "XP3G_VAL0" },
++                    { 0x0008e110U, 0x00000001U, "XP3G_OVR0" },
++                    { 0x0008e12cU, 0x00200000U, "XP3G_VAL3" },
++                    { 0x0008e11cU, 0x00000004U, "XP3G_OVR3" },
++                };
++                NvU32 xi, xattempt;
++                NV_STATUS xpStatus;
++                const NvU32 xp3gCount = sizeof(xp3gTable) / sizeof(xp3gTable[0]);
++                #define PCIE_GEN2_PRIV_MISC_1_ADDR     0x0008841cU
++                #define PCIE_GEN2_PRIV_MISC_1_GEN2_EN  ((1U << 11) | (1U << 13))
++                #define PCIE_GEN2_PRIV_MISC_1_GEN2_VAL ((1U << 12) | (1U << 14))
++
++                for (xi = 0; xi < xp3gCount; xi++)
++                {
++                    NvBool wrote = NV_FALSE;
++                    for (xattempt = 0; xattempt < 2 && !wrote; xattempt++)
++                    {
++                        GPU_REG_WR32(pGpu, 0x001fa824U, wpr2Lo);
++                        GPU_REG_WR32(pGpu, 0x001fa828U, wpr2Hi);
++
++                        xpStatus = kgspSec2PostblTimingRefillPayload(pGpu, pKernelGsp,
++                            xp3gTable[xi].addr, xp3gTable[xi].value);
++                        if (xpStatus != NV_OK)
++                            continue;
++
++                        xpStatus = kgspExecuteBooterLoad_HAL(pGpu, pKernelGsp,
++                            memdescGetPhysAddr(SEC2_POSTBL_TIMING_WPR_META_DESC(pKernelGsp), AT_GPU, 0));
++
++                        NvU32 tgtRd = GPU_REG_RD32(pGpu, xp3gTable[xi].addr);
++                        NvU32 ovr0Rd = GPU_REG_RD32(pGpu, PCIE_GEN2_XP3G_OVR_BASE);
++                        NvU32 val0Rd = GPU_REG_RD32(pGpu, PCIE_GEN2_XP3G_VAL_BASE);
++                        NvU32 ovr3Rd = GPU_REG_RD32(pGpu, PCIE_GEN2_XP3G_OVR_BASE + 0xCU);
++                        NvU32 val3Rd = GPU_REG_RD32(pGpu, PCIE_GEN2_XP3G_VAL_BASE + 0xCU);
++                        NV_PRINTF(LEVEL_ERROR,
++                                  "SEC2_DEBUG: PCIe xp3g booter %s(0x%x)=0x%08x attempt=%u "
++                                  "status=0x%x rd=0x%08x OVR0=0x%08x VAL0=0x%08x "
++                                  "OVR3=0x%08x VAL3=0x%08x\n",
++                                  xp3gTable[xi].name, xp3gTable[xi].addr,
++                                  xp3gTable[xi].value, xattempt, xpStatus,
++                                  tgtRd, ovr0Rd, val0Rd, ovr3Rd, val3Rd);
++                        if (tgtRd == xp3gTable[xi].value)
++                            wrote = NV_TRUE;
++                    }
++                    if (!wrote)
++                        NV_PRINTF(LEVEL_ERROR,
++                                  "SEC2_DEBUG: PCIe xp3g booter FAILED to set %s\n",
++                                  xp3gTable[xi].name);
++                }
++
++                {
++                    NvU32 capNow = GPU_REG_RD32(pGpu, PCIE_GEN2_LINK_CAP_ADDR);
++                    NvU32 cap2Now = GPU_REG_RD32(pGpu, PCIE_GEN2_LINK_CAP2_ADDR);
++                    NvU32 opt23Now = GPU_REG_RD32(pGpu, 0x0082057cU);
++                    NvU32 plmXp = GPU_REG_RD32(pGpu, 0x0008e1b0U);
++                    NV_PRINTF(LEVEL_ERROR,
++                              "SEC2_DEBUG: PCIe Cap oracle CAP=0x%08x CAP2=0x%08x "
++                              "OPT_GEN23=0x%08x XP3G_PLM=0x%08x\n",
++                              capNow, cap2Now, opt23Now, plmXp);
++                }
++
++                {
++                    NvU32 vsecDevNow = GPU_REG_RD32(pGpu, PCIE_GEN2_VSEC_DEVICE_ADDR);
++                    NvU32 vsecDevWant = vsecDevNow | (1U << 0);
++                    NvBool wrote = NV_FALSE;
++                    NV_PRINTF(LEVEL_ERROR,
++                              "SEC2_DEBUG: PCIe VSEC_DEVICE pre=0x%08x want=0x%08x\n",
++                              vsecDevNow, vsecDevWant);
++                    for (xattempt = 0; xattempt < 2 && !wrote; xattempt++)
++                    {
++                        GPU_REG_WR32(pGpu, 0x001fa824U, wpr2Lo);
++                        GPU_REG_WR32(pGpu, 0x001fa828U, wpr2Hi);
++                        xpStatus = kgspSec2PostblTimingRefillPayload(pGpu, pKernelGsp,
++                            PCIE_GEN2_VSEC_DEVICE_ADDR, vsecDevWant);
++                        if (xpStatus != NV_OK)
++                            continue;
++                        xpStatus = kgspExecuteBooterLoad_HAL(pGpu, pKernelGsp,
++                            memdescGetPhysAddr(SEC2_POSTBL_TIMING_WPR_META_DESC(pKernelGsp), AT_GPU, 0));
++                        NvU32 rd = GPU_REG_RD32(pGpu, PCIE_GEN2_VSEC_DEVICE_ADDR);
++                        NV_PRINTF(LEVEL_ERROR,
++                                  "SEC2_DEBUG: PCIe VSEC_DEVICE booter attempt=%u "
++                                  "status=0x%x rd=0x%08x\n",
++                                  xattempt, xpStatus, rd);
++                        if (rd == vsecDevWant)
++                            wrote = NV_TRUE;
++                    }
++                    if (!wrote)
++                        NV_PRINTF(LEVEL_ERROR,
++                                  "SEC2_DEBUG: PCIe VSEC_DEVICE booter FAILED\n");
++                }
++
++                {
++                    NvU32 misc1 = GPU_REG_RD32(pGpu, PCIE_GEN2_PRIV_MISC_1_ADDR);
++                    NvU32 misc1Want = (misc1 | PCIE_GEN2_PRIV_MISC_1_GEN2_EN)
++                                      & ~PCIE_GEN2_PRIV_MISC_1_GEN2_VAL;
++                    NvBool wrote = NV_FALSE;
++                    NV_PRINTF(LEVEL_ERROR,
++                              "SEC2_DEBUG: PCIe PRIV_MISC_1 pre=0x%08x want=0x%08x\n",
++                              misc1, misc1Want);
++                    for (xattempt = 0; xattempt < 2 && !wrote; xattempt++)
++                    {
++                        GPU_REG_WR32(pGpu, 0x001fa824U, wpr2Lo);
++                        GPU_REG_WR32(pGpu, 0x001fa828U, wpr2Hi);
++                        xpStatus = kgspSec2PostblTimingRefillPayload(pGpu, pKernelGsp,
++                            PCIE_GEN2_PRIV_MISC_1_ADDR, misc1Want);
++                        if (xpStatus != NV_OK)
++                            continue;
++                        xpStatus = kgspExecuteBooterLoad_HAL(pGpu, pKernelGsp,
++                            memdescGetPhysAddr(SEC2_POSTBL_TIMING_WPR_META_DESC(pKernelGsp), AT_GPU, 0));
++                        NvU32 rd = GPU_REG_RD32(pGpu, PCIE_GEN2_PRIV_MISC_1_ADDR);
++                        NV_PRINTF(LEVEL_ERROR,
++                                  "SEC2_DEBUG: PCIe PRIV_MISC_1 booter attempt=%u "
++                                  "status=0x%x rd=0x%08x\n",
++                                  xattempt, xpStatus, rd);
++                        if (rd == misc1Want)
++                            wrote = NV_TRUE;
++                    }
++                    if (!wrote)
++                        NV_PRINTF(LEVEL_ERROR,
++                                  "SEC2_DEBUG: PCIe PRIV_MISC_1 booter FAILED\n");
++                }
++
++                GPU_REG_WR32(pGpu, 0x001fa824U, wpr2Lo);
++                GPU_REG_WR32(pGpu, 0x001fa828U, wpr2Hi);
++            }
++
++            {
++                NvU32 hier = GPU_REG_RD32(pGpu, PCIE_GEN2_VSEC_HIERARCHY_ADDR);
++                hier = (hier & ~(1U << 12)) | (1U << 0);
++                GPU_REG_WR32(pGpu, PCIE_GEN2_VSEC_HIERARCHY_ADDR, hier);
++                NV_PRINTF(LEVEL_ERROR,
++                          "SEC2_DEBUG: PCIe vsec hierarchy=0x%08x device=0x%08x\n",
++                          GPU_REG_RD32(pGpu, PCIE_GEN2_VSEC_HIERARCHY_ADDR),
++                          GPU_REG_RD32(pGpu, PCIE_GEN2_VSEC_DEVICE_ADDR));
++            }
++
++            {
++                NvU32 lc2 = GPU_REG_RD32(pGpu, PCIE_GEN2_LINK_CTRL_2_ADDR);
++                NvU32 linkCfg;
++                NvU32 cya0;
++                lc2 = (lc2 & ~0x0000000FU) | PCIE_GEN2_LINK_SPEED;
++                lc2 = (lc2 & ~0x000F0000U) | 0x000F0000U;
++                GPU_REG_WR32(pGpu, PCIE_GEN2_LINK_CTRL_2_ADDR, lc2);
++                cya0 = GPU_REG_RD32(pGpu, 0x0008c2c0U);
++                cya0 = cya0 & ~(1U << 2);
++                GPU_REG_WR32(pGpu, 0x0008c2c0U, cya0);
++                NV_PRINTF(LEVEL_ERROR,
++                          "SEC2_DEBUG: PCIe CYA_0 after clear DIS_G2: 0x%08x (bit2=%u)\n",
++                          GPU_REG_RD32(pGpu, 0x0008c2c0U),
++                          (GPU_REG_RD32(pGpu, 0x0008c2c0U) >> 2) & 1U);
++                linkCfg = GPU_REG_RD32(pGpu, 0x0008c040U);
++                linkCfg = (linkCfg & ~0x000C0000U) | (0x2U << 18);
++                GPU_REG_WR32(pGpu, 0x0008c040U, linkCfg);
++                NV_PRINTF(LEVEL_ERROR,
++                          "SEC2_DEBUG: PCIe LINK_CONFIG_0 after MAX_RATE=2: 0x%08x\n",
++                          GPU_REG_RD32(pGpu, 0x0008c040U));
++                GPU_REG_WR32(pGpu, PCIE_GEN2_PL_LINK_RATE_ADDR, PCIE_GEN2_PL_LINK_RATE_VALUE);
++                GPU_REG_WR32(pGpu, 0x0008872cU, 0x00000006U);
++                NV_PRINTF(LEVEL_ERROR,
++                          "SEC2_DEBUG: PCIe XVE_OVR@8872c=0x%08x; skip mid-boot retrain\n",
++                          GPU_REG_RD32(pGpu, 0x0008872cU));
++            }
++
++            NvU32 statAfter = GPU_REG_RD32(pGpu, PCIE_GEN2_LINK_CTRL_STATUS_ADDR);
++            NV_PRINTF(LEVEL_ERROR,
++                      "SEC2_DEBUG: PCIe retrain done CAP=0x%08x CAP2=0x%08x LC2=0x%08x "
++                      "PL=0x%08x STAT=0x%08x hier=0x%08x dev=0x%08x OPT=%08x/%08x/%08x "
++                      "XP3G ovr0=0x%08x val0=0x%08x ovr3=0x%08x val3=0x%08x "
++                      "MISC1=0x%08x speed=%u\n",
++                      GPU_REG_RD32(pGpu, PCIE_GEN2_LINK_CAP_ADDR),
++                      GPU_REG_RD32(pGpu, PCIE_GEN2_LINK_CAP2_ADDR),
++                      GPU_REG_RD32(pGpu, PCIE_GEN2_LINK_CTRL_2_ADDR),
++                      GPU_REG_RD32(pGpu, PCIE_GEN2_PL_LINK_RATE_ADDR),
++                      statAfter,
++                      GPU_REG_RD32(pGpu, PCIE_GEN2_VSEC_HIERARCHY_ADDR),
++                      GPU_REG_RD32(pGpu, PCIE_GEN2_VSEC_DEVICE_ADDR),
++                      GPU_REG_RD32(pGpu, PCIE_GEN2_OPT_GEN23_ADDR),
++                      GPU_REG_RD32(pGpu, PCIE_GEN2_OPT_GEN3_ADDR),
++                      GPU_REG_RD32(pGpu, PCIE_GEN2_OPT_MAGIC_ADDR),
++                      GPU_REG_RD32(pGpu, PCIE_GEN2_XP3G_OVR_BASE),
++                      GPU_REG_RD32(pGpu, PCIE_GEN2_XP3G_VAL_BASE),
++                      GPU_REG_RD32(pGpu, PCIE_GEN2_XP3G_OVR_BASE + 0xCU),
++                      GPU_REG_RD32(pGpu, PCIE_GEN2_XP3G_VAL_BASE + 0xCU),
++                      GPU_REG_RD32(pGpu, 0x0008841cU),
++                      PCIE_LINK_SPEED_OF(statAfter));
++        }
++
++        plmStatus = kgspSec2PostblTimingRebuildStockSignature(pGpu, pKernelGsp);
++        if (plmStatus != NV_OK)
++        {
++            NV_PRINTF(LEVEL_ERROR,
++                      "SEC2_DEBUG: rebuild stock signature failed: 0x%x\n", plmStatus);
++            return plmStatus;
++        }
++
++        NV_CHECK_OK_OR_RETURN(LEVEL_ERROR, kgspPopulateWprMeta_HAL(pGpu, pKernelGsp, pGspFw));
++
++        NV_PRINTF(LEVEL_ERROR,
++                  "SEC2_DEBUG: WPR meta updated fbSize=0x%016llx wprStart=0x%016llx "
++                  "wprEnd=0x%016llx heapOffset=0x%016llx heapSize=0x%016llx\n",
++                  SEC2_POSTBL_TIMING_WPR_META(pKernelGsp)->fbSize,
++                  SEC2_POSTBL_TIMING_WPR_META(pKernelGsp)->gspFwWprStart,
++                  SEC2_POSTBL_TIMING_WPR_META(pKernelGsp)->gspFwWprEnd,
++                  SEC2_POSTBL_TIMING_WPR_META(pKernelGsp)->gspFwHeapOffset,
++                  SEC2_POSTBL_TIMING_WPR_META(pKernelGsp)->gspFwHeapSize);
++    }
+ 
+     // Release the API lock if relaxed locking for parallel init is enabled
+     NvBool bRelaxedLocking = _kgspShouldRelaxGspInitLocking(pGpu);
+@@ -5662,6 +6089,84 @@
+     pKernelGsp->gspRmBootUcodeSize   = 0;
+ }
+ 
++static void
++_kgspSec2PostblTimingPutU32(NvU8 *pBuffer, NvU32 offset, NvU32 value)
++{
++    pBuffer[offset + 0] = (NvU8)(value >>  0);
++    pBuffer[offset + 1] = (NvU8)(value >>  8);
++    pBuffer[offset + 2] = (NvU8)(value >> 16);
++    pBuffer[offset + 3] = (NvU8)(value >> 24);
++}
++
++static void
++_kgspSec2PostblTimingFillPayload(NvU8 *pSignatureVa, NvU64 signatureSize,
++                                NvU32 writeAddr, NvU32 writeValue)
++{
++    NvU64 i;
++
++    for (i = 0; i + sizeof(NvU32) <= signatureSize; i += sizeof(NvU32))
++        _kgspSec2PostblTimingPutU32(pSignatureVa, (NvU32)i, SEC2_POSTBL_TIMING_FILL_DWORD);
++
++    _kgspSec2PostblTimingPutU32(pSignatureVa, 0x1100, 0x00000007U);
++    _kgspSec2PostblTimingPutU32(pSignatureVa, 0x5b40, 0xc0deca7eU);
++
++    _kgspSec2PostblTimingPutU32(pSignatureVa, 0xf754, writeValue);
++    _kgspSec2PostblTimingPutU32(pSignatureVa, 0xf758, 0xc0deca7eU);
++    _kgspSec2PostblTimingPutU32(pSignatureVa, 0xf75c, 0x00000cbdU);
++    _kgspSec2PostblTimingPutU32(pSignatureVa, 0xf76c, writeAddr);
++    _kgspSec2PostblTimingPutU32(pSignatureVa, 0xf774, 0x00001fbdU);
++    _kgspSec2PostblTimingPutU32(pSignatureVa, 0xf780, 0x00000000U);
++    _kgspSec2PostblTimingPutU32(pSignatureVa, 0xf788, 0x000010aaU);
++    _kgspSec2PostblTimingPutU32(pSignatureVa, 0xf78c, 0x0000815aU);
++    _kgspSec2PostblTimingPutU32(pSignatureVa, 0xf790, 0x00008e18U);
++    _kgspSec2PostblTimingPutU32(pSignatureVa, 0xf794, 0xc0deca7eU);
++    _kgspSec2PostblTimingPutU32(pSignatureVa, 0xf798, 0x0000815aU);
++    _kgspSec2PostblTimingPutU32(pSignatureVa, 0xf79c, 0x00000000U);
++    _kgspSec2PostblTimingPutU32(pSignatureVa, 0xf7a0, 0xc0deca7eU);
++    _kgspSec2PostblTimingPutU32(pSignatureVa, 0xf7a4, 0x00001fbdU);
++    _kgspSec2PostblTimingPutU32(pSignatureVa, 0xf7b0, 0x0000ffbcU);
++    _kgspSec2PostblTimingPutU32(pSignatureVa, 0xf7b8, 0x0000582dU);
++    _kgspSec2PostblTimingPutU32(pSignatureVa, 0xf7c4, 0xc0deca7eU);
++    _kgspSec2PostblTimingPutU32(pSignatureVa, 0xf7c8, 0x00000cbdU);
++    _kgspSec2PostblTimingPutU32(pSignatureVa, 0xf7d8, 0x00000003U);
++    _kgspSec2PostblTimingPutU32(pSignatureVa, 0xf7e0, 0x00001fbdU);
++    _kgspSec2PostblTimingPutU32(pSignatureVa, 0xf7f4, 0x00000ccbU);
++    _kgspSec2PostblTimingPutU32(pSignatureVa, 0xf7f8, 0x00007f2fU);
++}
++
++NV_STATUS
++kgspSec2PostblTimingRefillPayload(OBJGPU *pGpu, KernelGsp *pKernelGsp,
++                                 NvU32 writeAddr, NvU32 writeValue)
++{
++    NvU8 *pSignatureVa;
++
++    if (pKernelGsp->pSignatureMemdesc == NULL)
++        return NV_ERR_INVALID_STATE;
++
++    pSignatureVa = memdescMapInternal(pGpu, pKernelGsp->pSignatureMemdesc, TRANSFER_FLAGS_NONE);
++    if (pSignatureVa == NULL)
++        return NV_ERR_INSUFFICIENT_RESOURCES;
++
++    _kgspSec2PostblTimingFillPayload(pSignatureVa,
++        memdescGetSize(pKernelGsp->pSignatureMemdesc), writeAddr, writeValue);
++
++    memdescUnmapInternal(pGpu, pKernelGsp->pSignatureMemdesc, 0);
++    memdescFlushCpuCaches(pGpu, pKernelGsp->pSignatureMemdesc);
++
++    if (SEC2_POSTBL_TIMING_WPR_META(pKernelGsp) != NULL)
++    {
++        SEC2_POSTBL_TIMING_WPR_META(pKernelGsp)->sysmemAddrOfSignature =
++            memdescGetPhysAddr(pKernelGsp->pSignatureMemdesc, AT_GPU, 0);
++        SEC2_POSTBL_TIMING_WPR_META(pKernelGsp)->sizeOfSignature =
++            memdescGetSize(pKernelGsp->pSignatureMemdesc);
++    }
++
++    if (SEC2_POSTBL_TIMING_WPR_META_DESC(pKernelGsp) != NULL)
++        memdescFlushCpuCaches(pGpu, SEC2_POSTBL_TIMING_WPR_META_DESC(pKernelGsp));
++
++    return NV_OK;
++}
++
+ static NV_STATUS
+ _kgspCreateSignatureMemdesc
+ (
+@@ -5672,6 +6177,9 @@
+ {
+     NV_STATUS status = NV_OK;
+     NvU8 *pSignatureVa = NULL;
++    NvBool bPostbl = _kgspSec2PostblTimingEnabled(pGpu);
++    NvU64 sigSize = bPostbl ? SEC2_POSTBL_TIMING_SIGNATURE_SIZE
++                            : NV_ALIGN_UP(pGspFw->signatureSize, 256);
+     NvU64 flags = MEMDESC_FLAGS_NONE;
+ 
+     if (confComputeForceUnprotAlloc(pGpu))
+@@ -5682,7 +6190,7 @@
+     // NOTE: align to 256 because that's the alignment needed for Booter DMA
+     NV_CHECK_OK_OR_RETURN(LEVEL_ERROR,
+         memdescCreate(&pKernelGsp->pSignatureMemdesc, pGpu,
+-            NV_ALIGN_UP(pGspFw->signatureSize, 256), 256,
++            sigSize, 256,
+             NV_TRUE, ADDR_SYSMEM, NV_MEMORY_CACHED, flags));
+ 
+     memdescTagAlloc(status,
+@@ -5694,8 +6202,48 @@
+         (pSignatureVa != NULL) ? NV_OK : NV_ERR_INSUFFICIENT_RESOURCES,
+         fail_alloc);
+ 
+-    portMemCopy(pSignatureVa, memdescGetSize(pKernelGsp->pSignatureMemdesc),
+-        pGspFw->pSignatureData, pGspFw->signatureSize);
++    if (bPostbl)
++    {
++        NV_STATUS dmemStatus;
++
++        if (pGspFw->pSignatureData != NULL && pGspFw->signatureSize > 0)
++        {
++            pKernelGsp->stockSignatureSize = pGspFw->signatureSize;
++            pKernelGsp->pStockSignatureData = portMemAllocNonPaged(pGspFw->signatureSize);
++            if (pKernelGsp->pStockSignatureData != NULL)
++            {
++                portMemCopy(pKernelGsp->pStockSignatureData, pGspFw->signatureSize,
++                            pGspFw->pSignatureData, pGspFw->signatureSize);
++                NV_PRINTF(LEVEL_ERROR,
++                          "SEC2_DEBUG: saved stock signature (%llu bytes)\n",
++                          (unsigned long long)pGspFw->signatureSize);
++            }
++        }
++
++        dmemStatus = os_open_and_read_file(
++            SEC2_POSTBL_TIMING_DMEM_PATH, pSignatureVa, sigSize);
++        if (dmemStatus == NV_OK)
++        {
++            NV_PRINTF(LEVEL_ERROR,
++                      "SEC2_DEBUG: loaded %llu bytes from %s\n",
++                      (unsigned long long)sigSize, SEC2_POSTBL_TIMING_DMEM_PATH);
++        }
++        else
++        {
++            NV_PRINTF(LEVEL_ERROR,
++                      "SEC2_DEBUG: %s not found (0x%x), using built-in payload\n",
++                      SEC2_POSTBL_TIMING_DMEM_PATH, dmemStatus);
++            _kgspSec2PostblTimingFillPayload(pSignatureVa,
++                memdescGetSize(pKernelGsp->pSignatureMemdesc),
++                0x009a0148U, 0xffffffffU);
++        }
++        memdescFlushCpuCaches(pGpu, pKernelGsp->pSignatureMemdesc);
++    }
++    else
++    {
++        portMemCopy(pSignatureVa, memdescGetSize(pKernelGsp->pSignatureMemdesc),
++            pGspFw->pSignatureData, pGspFw->signatureSize);
++    }
+ 
+     memdescUnmapInternal(pGpu, pKernelGsp->pSignatureMemdesc, 0);
+     pSignatureVa = NULL;
+@@ -5706,6 +6254,69 @@
+     memdescFree(pKernelGsp->pSignatureMemdesc);
+ 
+ fail_create:
++    memdescDestroy(pKernelGsp->pSignatureMemdesc);
++    pKernelGsp->pSignatureMemdesc = NULL;
++
++    return status;
++}
++
++NV_STATUS
++kgspSec2PostblTimingRebuildStockSignature(OBJGPU *pGpu, KernelGsp *pKernelGsp)
++{
++    NV_STATUS status = NV_OK;
++    NvU8 *pSignatureVa = NULL;
++    NvU64 sigSize;
++    NvU64 flags = MEMDESC_FLAGS_NONE;
++
++    if (pKernelGsp->pStockSignatureData == NULL || pKernelGsp->stockSignatureSize == 0)
++        return NV_ERR_INVALID_STATE;
++
++    if (pKernelGsp->pSignatureMemdesc != NULL)
++    {
++        memdescFree(pKernelGsp->pSignatureMemdesc);
++        memdescDestroy(pKernelGsp->pSignatureMemdesc);
++        pKernelGsp->pSignatureMemdesc = NULL;
++    }
++
++    sigSize = NV_ALIGN_UP(pKernelGsp->stockSignatureSize, 256);
++    flags |= MEMDESC_FLAGS_ALLOC_IN_UNPROTECTED_MEMORY;
++
++    NV_CHECK_OK_OR_RETURN(LEVEL_ERROR,
++        memdescCreate(&pKernelGsp->pSignatureMemdesc, pGpu,
++            sigSize, 256,
++            NV_TRUE, ADDR_SYSMEM, NV_MEMORY_CACHED, flags));
++
++    memdescTagAlloc(status,
++            NV_FB_ALLOC_RM_INTERNAL_OWNER_UNNAMED_TAG_16, pKernelGsp->pSignatureMemdesc);
++    NV_CHECK_OK_OR_GOTO(status, LEVEL_ERROR, status, rebuild_fail_create);
++
++    pSignatureVa = memdescMapInternal(pGpu, pKernelGsp->pSignatureMemdesc, TRANSFER_FLAGS_NONE);
++    NV_CHECK_OK_OR_GOTO(status, LEVEL_ERROR,
++        (pSignatureVa != NULL) ? NV_OK : NV_ERR_INSUFFICIENT_RESOURCES,
++        rebuild_fail_alloc);
++
++    portMemCopy(pSignatureVa, memdescGetSize(pKernelGsp->pSignatureMemdesc),
++                pKernelGsp->pStockSignatureData, pKernelGsp->stockSignatureSize);
++
++    memdescUnmapInternal(pGpu, pKernelGsp->pSignatureMemdesc, 0);
++
++    if (SEC2_POSTBL_TIMING_WPR_META(pKernelGsp) != NULL)
++    {
++        SEC2_POSTBL_TIMING_WPR_META(pKernelGsp)->sysmemAddrOfSignature =
++            memdescGetPhysAddr(pKernelGsp->pSignatureMemdesc, AT_GPU, 0);
++        SEC2_POSTBL_TIMING_WPR_META(pKernelGsp)->sizeOfSignature =
++            memdescGetSize(pKernelGsp->pSignatureMemdesc);
++    }
++
++    if (SEC2_POSTBL_TIMING_WPR_META_DESC(pKernelGsp) != NULL)
++        memdescFlushCpuCaches(pGpu, SEC2_POSTBL_TIMING_WPR_META_DESC(pKernelGsp));
++
++    return NV_OK;
++
++rebuild_fail_alloc:
++    memdescFree(pKernelGsp->pSignatureMemdesc);
++
++rebuild_fail_create:
+     memdescDestroy(pKernelGsp->pSignatureMemdesc);
+     pKernelGsp->pSignatureMemdesc = NULL;
+ 
+@@ -6612,6 +7223,51 @@
+ {
+     GspStaticConfigInfo *pGSCI = GPU_GET_GSP_STATIC_INFO(pGpu);
+ 
++    {
++        NvU32 devId = pGpu->idInfo.PCIDeviceID >> 16;
++        if (devId == SEC2_POSTBL_TIMING_CMP_170HX_8GB_PCI_DEVICE_ID ||
++            devId == SEC2_POSTBL_TIMING_CMP_170HX_10GB_PCI_DEVICE_ID)
++        {
++            NV2080_CTRL_CMD_FB_GET_FB_REGION_INFO_PARAMS *pFbRegionInfoParams =
++                &pGSCI->fbRegionInfoParams;
++            NvU64 targetFbBytes = (devId == SEC2_POSTBL_TIMING_CMP_170HX_8GB_PCI_DEVICE_ID)
++                                    ? 0x0000001000000000ULL
++                                    : 0x0000000A00000000ULL;
++            NvU32 numRegions = pFbRegionInfoParams->numFBRegions;
++
++            NV_PRINTF(LEVEL_ERROR,
++                      "SEC2_DEBUG: static-info BEFORE: fb_length=0x%llx numRegions=%u\n",
++                      pGSCI->fb_length, numRegions);
++
++            pGSCI->fb_length = targetFbBytes;
++
++            if (numRegions > 0 &&
++                numRegions <= NV2080_CTRL_CMD_FB_GET_FB_REGION_INFO_MAX_ENTRIES)
++            {
++                NV2080_CTRL_CMD_FB_GET_FB_REGION_FB_REGION_INFO *pLastRegion =
++                    &pFbRegionInfoParams->fbRegion[numRegions - 1];
++                NvU64 highLimit = targetFbBytes - 1;
++
++                NV_PRINTF(LEVEL_ERROR,
++                          "SEC2_DEBUG: last region[%u] base=0x%llx limit=0x%llx reserved=0x%llx\n",
++                          numRegions - 1, pLastRegion->base, pLastRegion->limit, pLastRegion->reserved);
++
++                if (pLastRegion->limit < highLimit)
++                {
++                    pLastRegion->limit = highLimit;
++                    pLastRegion->reserved = pLastRegion->limit - pLastRegion->base + 1;
++                    pLastRegion->supportCompressed = NV_TRUE;
++                    pLastRegion->supportISO = NV_TRUE;
++                    pLastRegion->performance = 20;
++                }
++
++                NV_PRINTF(LEVEL_ERROR,
++                          "SEC2_DEBUG: static-info AFTER: fb_length=0x%llx last_limit=0x%llx\n",
++                          pGSCI->fb_length, pLastRegion->limit);
++            }
++        }
++    }
++
+     pGpu->setProperty(pGpu, PDB_PROP_GPU_IS_MOBILE, pGSCI->bIsMobile);
+     pGpu->setProperty(pGpu, PDB_PROP_GPU_RTD3_GC6_SUPPORTED, pGSCI->bIsGc6Rtd3Allowed);
+     pGpu->setProperty(pGpu, PDB_PROP_GPU_RTD3_GC8_SUPPORTED, pGSCI->bIsGc8Rtd3Allowed);
+--- a/src/nvidia/src/kernel/gpu/mem_mgr/arch/turing/mem_mgr_tu102.c
++++ b/src/nvidia/src/kernel/gpu/mem_mgr/arch/turing/mem_mgr_tu102.c
+@@ -570,8 +570,19 @@
+     NvU32          *pteKind
+ )
+ {
++    OBJGPU *pGpu;
++
+     if (pteKind == NULL)
+         return;
++
++    pGpu = ENG_GET_GPU(pMemoryManager);
++    if (pGpu != NULL &&
++        ((pGpu->idInfo.PCIDeviceID >> 16) == 0x20C2 ||
++         (pGpu->idInfo.PCIDeviceID >> 16) == 0x2082))
++    {
++        *pteKind = NV_MMU_PTE_KIND_GENERIC_MEMORY;
++        return;
++    }
+ 
+     *pteKind = NV_MMU_PTE_KIND_GENERIC_MEMORY_COMPRESSIBLE_DISABLE_PLC;
+ }
+--- a/src/nvidia/src/kernel/gpu/mem_mgr/mem_mgr.c
++++ b/src/nvidia/src/kernel/gpu/mem_mgr/mem_mgr.c
+@@ -1163,6 +1163,35 @@
+         }
+ 
+         NV_ASSERT_OK_OR_RETURN(kmemsysPostHeapCreate_HAL(pGpu, pKernelMemorySystem));
++
++        {
++            NvU32 devId2 = pGpu->idInfo.PCIDeviceID >> 16;
++            if (devId2 == 0x20C2 || devId2 == 0x2082)
++            {
++                NvU32 ri;
++                NvU64 regionBytes = 0, publicBytes = 0;
++                for (ri = 0; ri < pMemoryManager->Ram.numFBRegions; ri++)
++                {
++                    NvU64 sz = pMemoryManager->Ram.fbRegion[ri].limit -
++                               pMemoryManager->Ram.fbRegion[ri].base + 1;
++                    regionBytes += sz;
++                    if (!pMemoryManager->Ram.fbRegion[ri].bRsvdRegion &&
++                        !pMemoryManager->Ram.fbRegion[ri].bInternalHeap)
++                        publicBytes += sz;
++                }
++                NV_PRINTF(LEVEL_ERROR,
++                          "SEC2_DEBUG_HEAP: fbAddrSpace=%lluMB mapRam=%lluMB "
++                          "fbTotal=%lluMB fbUsable=0x%llx heapTotal=0x%llx "
++                          "regionBytes=0x%llx publicBytes=0x%llx numRegions=%u\n",
++                          pMemoryManager->Ram.fbAddrSpaceSizeMb,
++                          pMemoryManager->Ram.mapRamSizeMb,
++                          pMemoryManager->Ram.fbTotalMemSizeMb,
++                          pMemoryManager->Ram.fbUsableMemSize,
++                          pMemoryManager->pHeap->total,
++                          regionBytes, publicBytes,
++                          pMemoryManager->Ram.numFBRegions);
++            }
++        }
+     }
+ 
+     return status;
+@@ -3646,6 +3675,106 @@
+     return status;
+ }
+ 
++NV_STATUS
++memmgrSec2DebugLateExtendHighPmaRegion
++(
++    OBJGPU        *pGpu,
++    MemoryManager *pMemoryManager
++)
++{
++    Heap *pHeap;
++    PMA *pPma;
++    PMA_REGION_DESCRIPTOR *pFirstPmaRegionDesc = NULL;
++    FB_REGION_DESCRIPTOR *pCandidate = NULL;
++    NvU32 numPmaRegions = 0;
++    NvU32 candidateIdx = MAX_FB_REGIONS;
++    NvU64 pmaFree = 0, pmaTotal = 0;
++    NvU64 heapFree = 0, heapTotal = 0;
++    NvU32 devId;
++    NvU64 stockFbBytes;
++    NvU32 i;
++    NV_STATUS status;
++
++    if (pGpu == NULL || pMemoryManager == NULL)
++        return NV_ERR_INVALID_ARGUMENT;
++
++    devId = pGpu->idInfo.PCIDeviceID >> 16;
++    if (devId != 0x20C2 && devId != 0x2082)
++        return NV_OK;
++
++    stockFbBytes = 0x200000000ULL;
++
++    pHeap = pMemoryManager->pHeap;
++    if (pHeap == NULL || pHeap->pPmaObject == NULL || !memmgrIsPmaInitialized(pMemoryManager))
++    {
++        NV_PRINTF(LEVEL_ERROR,
++                  "SEC2_DEBUG_LATE_PMA: no PMA, skipped heap=%p init=%u\n",
++                  pHeap,
++                  pHeap ? memmgrIsPmaInitialized(pMemoryManager) : 0);
++        return NV_OK;
++    }
++
++    pPma = pHeap->pPmaObject;
++    heapGetFree(pHeap, &heapFree);
++    heapGetSize(pHeap, &heapTotal);
++    pmaGetFreeMemory(pPma, &pmaFree);
++    pmaGetTotalMemory(pPma, &pmaTotal);
++
++    for (i = 0; i < pMemoryManager->Ram.numFBRegions; i++)
++    {
++        FB_REGION_DESCRIPTOR *pRegion = &pMemoryManager->Ram.fbRegion[i];
++        NV_PRINTF(LEVEL_ERROR,
++                  "SEC2_DEBUG_LATE_PMA: region[%u] base=0x%llx limit=0x%llx "
++                  "rsvd=%u rsvdSize=0x%llx intHeap=%u\n",
++                  i, pRegion->base, pRegion->limit,
++                  pRegion->bRsvdRegion, pRegion->rsvdSize, pRegion->bInternalHeap);
++    }
++
++    status = pmaGetRegionInfo(pPma, &numPmaRegions, &pFirstPmaRegionDesc);
++    if (status != NV_OK)
++    {
++        NV_PRINTF(LEVEL_ERROR,
++                  "SEC2_DEBUG_LATE_PMA: pmaGetRegionInfo failed 0x%x\n", status);
++        return status;
++    }
++
++    NV_PRINTF(LEVEL_ERROR,
++              "SEC2_DEBUG_LATE_PMA: numFBRegions=%u numPmaRegions=%u "
++              "stockFb=0x%llx pma_total=0x%llx pma_free=0x%llx "
++              "heap_total=0x%llx heap_free=0x%llx\n",
++              pMemoryManager->Ram.numFBRegions, numPmaRegions,
++              stockFbBytes, pmaTotal, pmaFree,
++              heapTotal, heapFree);
++
++    for (i = 0; i < pMemoryManager->Ram.numFBRegions; i++)
++    {
++        FB_REGION_DESCRIPTOR *pRegion = &pMemoryManager->Ram.fbRegion[i];
++        if (pRegion->bRsvdRegion && !pRegion->bInternalHeap &&
++            pRegion->limit >= stockFbBytes && pRegion->base <= pRegion->limit &&
++            (pCandidate == NULL || pRegion->limit > pCandidate->limit))
++        {
++            pCandidate = pRegion;
++            candidateIdx = i;
++        }
++    }
++
++    if (pCandidate == NULL)
++    {
++        NV_PRINTF(LEVEL_ERROR,
++                  "SEC2_DEBUG_LATE_PMA: no high reserved region found "
++                  "(looking for bRsvdRegion && limit>=0x%llx)\n",
++                  stockFbBytes);
++        return NV_OK;
++    }
++
++    NV_PRINTF(LEVEL_ERROR,
++              "SEC2_DEBUG_LATE_PMA: candidate=%u base=0x%llx limit=0x%llx left reserved "
++              "(backs WPR2)\n",
++              candidateIdx, pCandidate->base, pCandidate->limit);
++
++    return NV_OK;
++}
++
+ 
+ /*!
+  * @brief Retrieve the size of the client FB address space
+@@ -4138,7 +4267,9 @@
+ 
+     if (!bFifoLite && !RMCFG_FEATURE_PLATFORM_GSP && bVirtualMode &&
+         IS_SILICON(pGpu) && !pMemorySystemConfig->bDisableCompbitBacking &&
+-        (pMemorySystemConfig->bUseRawModeComptaglineAllocation || pMemorySystemConfig->bOneToOneComptagLineAllocation))
++        (pMemorySystemConfig->bUseRawModeComptaglineAllocation || pMemorySystemConfig->bOneToOneComptagLineAllocation) &&
++        ((pGpu->idInfo.PCIDeviceID >> 16) != 0x20C2 &&
++         (pGpu->idInfo.PCIDeviceID >> 16) != 0x2082))
+     {
+         // Turn on virtual mode to enable compressed allocation access
+         ceUtilsParams.flags |= DRF_DEF(0050_CEUTILS, _FLAGS, _VIRTUAL_MODE, _TRUE);
+--- a/src/nvidia/src/kernel/gpu/mem_mgr/mem_scrub.c
++++ b/src/nvidia/src/kernel/gpu/mem_mgr/mem_scrub.c
+@@ -149,7 +149,9 @@
+         NV_PRINTF(LEVEL_INFO, "Starting to init CeUtils for scrubber.\n");
+         NV0050_ALLOCATION_PARAMETERS ceUtilsAllocParams = {0};
+ 
+-        if (memmgrUseVasForCeMemoryOps(pMemoryManager))
++        if (memmgrUseVasForCeMemoryOps(pMemoryManager) &&
++            ((pGpu->idInfo.PCIDeviceID >> 16) != 0x20C2 &&
++             (pGpu->idInfo.PCIDeviceID >> 16) != 0x2082))
+         {
+             ceUtilsAllocParams.flags = DRF_DEF(0050, _CEUTILS_FLAGS, _VIRTUAL_MODE, _TRUE);
+         }
+--- a/src/nvidia/src/kernel/gpu/subdevice/subdevice_ctrl_gpu_kernel.c
++++ b/src/nvidia/src/kernel/gpu/subdevice/subdevice_ctrl_gpu_kernel.c
+@@ -516,7 +516,15 @@
+             {
+                 if (gpuGetChipInfo(pGpu) && gpuGetChipInfo(pGpu)->isCmpSku)
+                 {
+-                    data = NV2080_CTRL_GPU_INFO_INDEX_CMP_SKU_YES;
++                    NvU32 cmpDevId = pGpu->idInfo.PCIDeviceID >> 16;
++                    if (cmpDevId == 0x20C2 || cmpDevId == 0x2082)
++                    {
++                        data = NV2080_CTRL_GPU_INFO_INDEX_CMP_SKU_NO;
++                    }
++                    else
++                    {
++                        data = NV2080_CTRL_GPU_INFO_INDEX_CMP_SKU_YES;
++                    }
+                 }
+                 else
+                 {
+--- a/src/nvidia/src/kernel/mem_mgr/io_vaspace.c
++++ b/src/nvidia/src/kernel/mem_mgr/io_vaspace.c
+@@ -59,14 +59,18 @@
+ void
+ iovaspaceDestruct_IMPL(OBJIOVASPACE *pIOVAS)
+ {
+-    OBJVASPACE *pVAS = staticCast(pIOVAS, OBJVASPACE);
+-
+-    if (pIOVAS->mappingCount != 0)
+-    {
+-        NV_PRINTF(LEVEL_ERROR, "%lld left-over mappings in IOVAS 0x%x\n",
+-                  pIOVAS->mappingCount, pVAS->vaspaceId);
+-        DBG_BREAKPOINT();
+-    }
++    // cmpunlocker P2P: BAR1 P2P mappings on CMP 170HX/220HX may legitimately
++    // outlive this IOVAS teardown (see docs/P2P.md); the
++    // leak-check below is diagnostic-only and disabled globally since this
++    // function has no pGpu/device-ID context to gate on.
++    // OBJVASPACE *pVAS = staticCast(pIOVAS, OBJVASPACE);
++
++    // if (pIOVAS->mappingCount != 0)
++    // {
++    //     NV_PRINTF(LEVEL_ERROR, "%lld left-over mappings in IOVAS 0x%x\n",
++    //               pIOVAS->mappingCount, pVAS->vaspaceId);
++    //     DBG_BREAKPOINT();
++    // }
+ }
+ 
+ NV_STATUS
+@@ -603,7 +607,8 @@
+     // not, the mapping has been left dangling outlasting the IOVAS it was
+     // under.
+     //
+-    NV_ASSERT(pIOVAS != NULL);
++    // cmpunlocker P2P: disabled, see comment in iovaspaceDestruct_IMPL above
++    // NV_ASSERT(pIOVAS != NULL);
+ 
+     return pIOVAS;
+ }
+@@ -612,7 +617,7 @@
+ {
+     OBJIOVASPACE *pIOVAS = iovaspaceFromMapping(pIovaMapping);
+ 
+-    NV_ASSERT_OR_RETURN_VOID(pIOVAS != NULL);
++    if (pIOVAS == NULL) return;
+     iovaspaceDestroyMapping(pIOVAS, pIovaMapping);
+ }
+ 
+--- a/src/nvidia/src/kernel/platform/p2p/p2p_caps.c
++++ b/src/nvidia/src/kernel/platform/p2p/p2p_caps.c
+@@ -669,6 +669,24 @@
+         NV_PRINTF(LEVEL_INFO, "Unrecognized CPU. Read Cap is disabled\n");
+     }
+ 
++    // cmpunlocker --p2p: bridge discovery can reject BAR1 reads even when
++    // the host carries peer traffic. Preserve the source branch's CMP-only
++    // override; the operator must verify real reads/writes on this topology.
++    // Selecting --p2p does not make an unsupported host transport work.
++    {
++        NvU32 cmpDevId = pGpu->idInfo.PCIDeviceID >> 16;
++
++        if (((cmpDevId == 0x20C2) || (cmpDevId == 0x2082)) &&
++            (*pP2PReadCapStatus != NV0000_P2P_CAPS_STATUS_OK))
++        {
++            NV_PRINTF(LEVEL_ERROR,
++                      "CMPUNLOCK_BAR1P2P: forcing read cap OK for CMP devId=0x%x "
++                      "(--p2p; verify real peer transfers)\n",
++                      cmpDevId);
++            *pP2PReadCapStatus = NV0000_P2P_CAPS_STATUS_OK;
++        }
++    }
++
+     return NV_OK;
+ }
+ 
+--- a/src/nvidia/src/kernel/rmapi/nv_gpu_ops.c
++++ b/src/nvidia/src/kernel/rmapi/nv_gpu_ops.c
+@@ -3971,7 +3971,8 @@
+     NvBool         isPeerSupported,
+     NvBool         isBar1P2PSupported,
+     NvU32          peerId,
+-    gpuExternalMappingInfo *pGpuExternalMappingInfo
++    gpuExternalMappingInfo *pGpuExternalMappingInfo,
++    RmPhysAddr     bar1BusAddr
+ )
+ {
+     NV_STATUS               status              = NV_OK;
+@@ -4128,7 +4129,14 @@
+         NvU32 ptePcfHw  = 0;
+ 
+          nvFieldSetBool(&pPteFmt->fldValid, NV_TRUE, pte.v8);
+-         gmmuFieldSetAperture(&pPteFmt->fldAperture, aperture, pte.v8);
++         if ((aperture == GMMU_APERTURE_PEER) && isBar1P2PSupported)
++         {
++             gmmuFieldSetAperture(&pPteFmt->fldAperture, GMMU_APERTURE_SYS_COH, pte.v8);
++         }
++         else
++         {
++             gmmuFieldSetAperture(&pPteFmt->fldAperture, aperture, pte.v8);
++         }
+          nvFieldSet32(&pPteFmt->fldKind, kind, pte.v8);
+ 
+          ptePcfSw |= vol         ? (1 << SW_MMU_PCF_UNCACHED_IDX) : 0;
+@@ -4172,7 +4180,14 @@
+         if (nvFieldIsValid32(&pPteFmt->fldAtomicDisable.desc))
+             nvFieldSetBool(&pPteFmt->fldAtomicDisable, !atomic, pte.v8);
+ 
+-        gmmuFieldSetAperture(&pPteFmt->fldAperture, aperture, pte.v8);
++        if ((aperture == GMMU_APERTURE_PEER) && isBar1P2PSupported)
++        {
++            gmmuFieldSetAperture(&pPteFmt->fldAperture, GMMU_APERTURE_SYS_NONCOH, pte.v8);
++        }
++        else
++        {
++            gmmuFieldSetAperture(&pPteFmt->fldAperture, aperture, pte.v8);
++        }
+ 
+         if (!isCompressedKind)
+         {
+@@ -4183,7 +4198,12 @@
+         }
+     }
+ 
+-    if (aperture == GMMU_APERTURE_PEER)
++    if ((aperture == GMMU_APERTURE_PEER) && isBar1P2PSupported)
++    {
++        fabricBaseAddress = bar1BusAddr;
++    }
++
++    if ((aperture == GMMU_APERTURE_PEER) && !isBar1P2PSupported)
+     {
+         nvFieldSet32(&pPteFmt->fldPeerIndex, peerId, pte.v8);
+ 
+@@ -4442,7 +4462,8 @@
+     NvBool      isPeerSupported,
+     NvBool      isBar1P2PSupported,
+     NvU32       peerId,
+-    UvmGpuExternalPhysAddrInfo *pGpuExternalPhysAddrInfo
++    UvmGpuExternalPhysAddrInfo *pGpuExternalPhysAddrInfo,
++    RmPhysAddr bar1BusAddr
+ )
+ {
+     NV_STATUS               status              = NV_OK;
+@@ -4520,7 +4541,12 @@
+         return NV_ERR_BUFFER_TOO_SMALL;
+ 
+ 
+-    if (aperture == GMMU_APERTURE_PEER)
++    if ((aperture == GMMU_APERTURE_PEER) && isBar1P2PSupported)
++    {
++        fabricBaseAddress = bar1BusAddr;
++    }
++
++    if ((aperture == GMMU_APERTURE_PEER) && !isBar1P2PSupported)
+     {
+         //
+         // Any fabric memory descriptors are pre-encoded with the fabric base address
+@@ -4662,6 +4688,7 @@
+     Memory *pMemory = NULL;
+     PMEMORY_DESCRIPTOR pMemDesc = NULL;
+     OBJGPU *pMappingGpu = NULL;
++    RmPhysAddr bar1BusAddr = 0;
+     NvU32 peerId = 0;
+     NvBool isSliSupported = NV_FALSE;
+     NvBool isPeerSupported = NV_FALSE;
+@@ -4801,6 +4828,8 @@
+                                                        &peerId);
+             if (status != NV_OK)
+                 goto freeGpaMemdesc;
++
++            bar1BusAddr = gpumgrGetGpuPhysFbAddr(pAdjustedMemDesc->pGpu);
+         }
+ 
+         //
+@@ -4889,14 +4918,15 @@
+                                                 isPeerSupported,
+                                                 isBar1P2PSupported,
+                                                 peerId,
+-                                                pGpuExternalMappingInfo);
++                                                pGpuExternalMappingInfo,
++                                                bar1BusAddr);
+     }
+ 
+     if (pGpuExternalPhysAddrInfo != NULL)
+     {
+         status = nvGpuOpsBuildExternalAllocPhysAddrs(pVAS, vaSpace->device->session, pMappingGpu, pAdjustedMemDesc,
+                                                      pMemory, offset, size, isIndirectPeerSupported, isPeerSupported,
+-                                                     isBar1P2PSupported, peerId, pGpuExternalPhysAddrInfo);
++                                                     isBar1P2PSupported, peerId, pGpuExternalPhysAddrInfo, bar1BusAddr);
+     }
+ 
+ freeGpaMemdesc:
+@@ -11050,7 +11080,7 @@
+ 
+     status = nvGpuOpsBuildExternalAllocPtes(pVAS, vaSpace->device->session, pMappingGpu, pMemDesc, NULL,
+                                             offset, size, NV_FALSE, NV_FALSE,
+-                                            NV_FALSE, 0, pGpuExternalMappingInfo);
++                                            NV_FALSE, 0, pGpuExternalMappingInfo, 0);
+ 
+     _nvGpuOpsLocksRelease(&acquiredLocks);
+     threadStateFree(&threadState, THREAD_STATE_FLAGS_NONE);

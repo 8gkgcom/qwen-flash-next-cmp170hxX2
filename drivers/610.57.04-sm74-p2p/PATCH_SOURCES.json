@@ -1,0 +1,30 @@
+{
+  "nvidia_base": {
+    "tag": "610.57.04",
+    "url": "https://github.com/NVIDIA/open-gpu-kernel-modules/tree/610.57.04",
+    "license": "NVIDIA_COPYING and original per-file notices"
+  },
+  "cmpunlocker_base": {
+    "description": "User-supplied v0.4 tree with existing P2P integration",
+    "license": "CMPUNLOCKER_LICENSE",
+    "source_reference": "https://github.com/amoghmunikote/cmpunlocker"
+  },
+  "sm_increment": {
+    "url": "https://github.com/amoghmunikote/cmpunlocker/commit/6c442eeb6448b97c803e72b61da344a39e0a26ab",
+    "scope": "Only the SM-RECONFIG/RECONFIG_PLM addition, applied over the existing P2P stack"
+  },
+  "linux_compatibility": "Preserved pre-existing Linux 6.8 DRM connector mode_valid callback signature adjustment",
+  "aggregate_patch": "stock-to-sm74-p2p.patch reconstructs the verified source from stock 610.57.04 in one pass. It is not a patch against the older local driver.",
+  "source_manifest": "source-sha256.json covers all 3871 source files, including unchanged files",
+  "not_included": [
+    "ECC enable/reporting additions from cmpunlocker v0.5",
+    "PCIe Gen3/Gen4 experiments",
+    "host PCI/REBAR kernel patches",
+    "GSP firmware",
+    "closed-source user-space driver",
+    "prebuilt modules",
+    "VBIOS",
+    "model files",
+    "machine configuration and raw logs"
+  ]
+}

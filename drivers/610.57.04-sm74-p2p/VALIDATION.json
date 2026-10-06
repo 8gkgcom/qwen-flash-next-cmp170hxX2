@@ -1,0 +1,105 @@
+{
+  "historical_test_date": "2026-10-05",
+  "publication_identity_rechecked": "2026-10-06",
+  "kernel": "6.8.0-138-generic",
+  "gpu_count": 2,
+  "memory_mib_each": 65536,
+  "sm_count_each": 74,
+  "p2p_tests": [
+    {
+      "rank": 0,
+      "name": "NVIDIA CMP 170HX",
+      "sm_count": 74,
+      "matrix_mismatches": 0,
+      "broadcast_checks": [
+        {
+          "root": 0,
+          "salt": 17,
+          "mismatches": 0
+        },
+        {
+          "root": 0,
+          "salt": 193,
+          "mismatches": 0
+        },
+        {
+          "root": 0,
+          "salt": 65537,
+          "mismatches": 0
+        },
+        {
+          "root": 1,
+          "salt": 17,
+          "mismatches": 0
+        },
+        {
+          "root": 1,
+          "salt": 193,
+          "mismatches": 0
+        },
+        {
+          "root": 1,
+          "salt": 65537,
+          "mismatches": 0
+        }
+      ],
+      "allreduce_mismatches": 0,
+      "max_allocated_mib": 21.126953125,
+      "elapsed_s": 0.917,
+      "passed": true
+    },
+    {
+      "rank": 1,
+      "name": "NVIDIA CMP 170HX",
+      "sm_count": 74,
+      "matrix_mismatches": 0,
+      "broadcast_checks": [
+        {
+          "root": 0,
+          "salt": 17,
+          "mismatches": 0
+        },
+        {
+          "root": 0,
+          "salt": 193,
+          "mismatches": 0
+        },
+        {
+          "root": 0,
+          "salt": 65537,
+          "mismatches": 0
+        },
+        {
+          "root": 1,
+          "salt": 17,
+          "mismatches": 0
+        },
+        {
+          "root": 1,
+          "salt": 193,
+          "mismatches": 0
+        },
+        {
+          "root": 1,
+          "salt": 65537,
+          "mismatches": 0
+        }
+      ],
+      "allreduce_mismatches": 0,
+      "max_allocated_mib": 21.126953125,
+      "elapsed_s": 0.917,
+      "passed": true
+    }
+  ],
+  "transport": "P2P/CUMEM",
+  "bidirectional_transport_confirmed": true,
+  "historical_kernel_error_counts": {
+    "xid": 0,
+    "gpu_fallen_off": 0,
+    "kernel_fault": 0,
+    "aer_error": 0,
+    "oom": 0
+  },
+  "streamed_inference_correct": true,
+  "limits": "Small BF16 GEMM and 1 MiB patterned collective checks; not a full-VRAM or sustained stress test, raw-peer validation, GDS validation, or speed comparison. Publication checks only source/module identity and SM counts."
+}

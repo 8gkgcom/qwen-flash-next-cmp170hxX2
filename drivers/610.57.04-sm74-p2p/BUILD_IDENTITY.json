@@ -1,0 +1,78 @@
+{
+  "kernel": "6.8.0-138-generic",
+  "driver_version": "610.57.04",
+  "loaded_srcversion": "A7AA83788B88DA9780FC086",
+  "modules": {
+    "nvidia.ko": {
+      "installed_sha256": "ada09f8040cb497e84b8da637434e0098a66e29b5db4195b53469c2a86fa7e25",
+      "build_sha256": "ada09f8040cb497e84b8da637434e0098a66e29b5db4195b53469c2a86fa7e25"
+    },
+    "nvidia-modeset.ko": {
+      "installed_sha256": "8b46697babe428248321fdff8fdb01efca9b6f0ed20d0e10e4e6e754b5f8facf",
+      "build_sha256": "8b46697babe428248321fdff8fdb01efca9b6f0ed20d0e10e4e6e754b5f8facf"
+    },
+    "nvidia-uvm.ko": {
+      "installed_sha256": "96baafc154a0e7ab2bfa0186f87abb4055a5edae55dedf4cab6479f44529ece0",
+      "build_sha256": "96baafc154a0e7ab2bfa0186f87abb4055a5edae55dedf4cab6479f44529ece0"
+    },
+    "nvidia-drm.ko": {
+      "installed_sha256": "e5bd7558b43eb77fa24e78233a1a8d96ff6f60e7e5b5a3c6b030a64d77b7ec80",
+      "build_sha256": "e5bd7558b43eb77fa24e78233a1a8d96ff6f60e7e5b5a3c6b030a64d77b7ec80"
+    },
+    "nvidia-peermem.ko": {
+      "installed_sha256": "e84f968d11737d778debd1db3472c34ab90004fdf98a3e48f20d59a9486536ad",
+      "build_sha256": "e84f968d11737d778debd1db3472c34ab90004fdf98a3e48f20d59a9486536ad"
+    }
+  },
+  "sm_counts": [
+    74,
+    74
+  ],
+  "verified_date": "2026-10-06",
+  "source_file_count": 3871,
+  "changed_files_against_nvidia_610_57_04": [
+    "kernel-open/nvidia-drm/nvidia-drm-connector.c",
+    "kernel-open/nvidia-uvm/uvm_gpu.h",
+    "kernel-open/nvidia/nv-pci.c",
+    "kernel-open/nvidia/nv-reg.h",
+    "kernel-open/nvidia/nv.c",
+    "src/nvidia/arch/nvalloc/unix/src/osinit.c",
+    "src/nvidia/generated/g_kern_bus_nvoc.c",
+    "src/nvidia/generated/g_kernel_gsp_nvoc.h",
+    "src/nvidia/inc/kernel/gpu/mem_mgr/mem_mgr.h",
+    "src/nvidia/src/kernel/gpu/bif/kernel_bif.c",
+    "src/nvidia/src/kernel/gpu/bus/arch/maxwell/kern_bus_gm107.c",
+    "src/nvidia/src/kernel/gpu/bus/arch/pascal/kern_bus_gp100.c",
+    "src/nvidia/src/kernel/gpu/gpu.c",
+    "src/nvidia/src/kernel/gpu/gpu_gspclient.c",
+    "src/nvidia/src/kernel/gpu/gsp/arch/turing/kernel_gsp_tu102.c",
+    "src/nvidia/src/kernel/gpu/gsp/kernel_gsp.c",
+    "src/nvidia/src/kernel/gpu/mem_mgr/arch/turing/mem_mgr_tu102.c",
+    "src/nvidia/src/kernel/gpu/mem_mgr/mem_mgr.c",
+    "src/nvidia/src/kernel/gpu/mem_mgr/mem_scrub.c",
+    "src/nvidia/src/kernel/gpu/subdevice/subdevice_ctrl_gpu_kernel.c",
+    "src/nvidia/src/kernel/mem_mgr/io_vaspace.c",
+    "src/nvidia/src/kernel/platform/p2p/p2p_caps.c",
+    "src/nvidia/src/kernel/rmapi/nv_gpu_ops.c"
+  ],
+  "stock_archive_sha256": "619d7b5ce1f79c3211afdbf87d02b2174d268b10d005c5b8f994be22299be681",
+  "binary_modules_included": false,
+  "scope": "All 3871 official source paths match the current build tree. All five installed modules match that tree's build outputs. No new compile, reboot or stress test during publication.",
+  "features": [
+    "64 GiB HBM",
+    "BAR1/P2P patches",
+    "74 SM",
+    "PCIe Gen2",
+    "existing Linux 6.8 DRM compatibility"
+  ],
+  "excluded_features": [
+    "v0.5 ECC additions",
+    "experimental PCIe Gen3/Gen4 changes"
+  ],
+  "source_origins": {
+    "nvidia": "https://github.com/NVIDIA/open-gpu-kernel-modules/tree/610.57.04",
+    "base": "User-supplied cmpunlocker v0.4 plus existing P2P integration",
+    "sm_addition": "https://github.com/amoghmunikote/cmpunlocker/commit/6c442eeb6448b97c803e72b61da344a39e0a26ab",
+    "sm_release_reference": "https://github.com/amoghmunikote/cmpunlocker/releases/tag/v0.5"
+  }
+}
