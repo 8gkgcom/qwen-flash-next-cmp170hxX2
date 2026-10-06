@@ -1,4 +1,10 @@
-# 64GB / P2P 驱动
+# CMP 170HX 驱动
+
+当前版本见 [64GB / P2P / 74 SM 源码与安装说明](../drivers/610.57.04-sm74-p2p/README.md)，[完整源码附件](https://github.com/8gkgcom/qwen-flash-next-cmp170hxX2/releases/tag/v2026.10.06-driver-sm74)。
+
+以下保留 **2026-10-01 的 70 SM 历史版本**说明；不要用其构建安装器覆盖新的 74 SM 版本。
+
+## 2026-10-01 历史版本
 
 先下载并解压 [完整源码附件](https://github.com/8gkgcom/qwen-flash-next-cmp170hxX2/releases/tag/v2026.10.01)，以下路径和命令以完整包为准。
 
